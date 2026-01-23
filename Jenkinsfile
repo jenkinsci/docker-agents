@@ -9,22 +9,16 @@ properties([
 def agentSelector(String imageType, spotRetryCounter) {
     def platform
     switch (imageType) {
-        // TODO: to be removed later, when Windows 2019 support is dropped
-        // cf https://github.com/jenkins-infra/helpdesk/issues/4954
         // nanoserver-1809, nanoserver-ltsc2019 and windowservercore-ltsc2019
         case ~/.*9/:
             platform = 'windows-2019'
             break
 
-        // TODO: to be removed later, when using Windows 2025 agents by default
-        // cf https://github.com/jenkins-infra/helpdesk/issues/4956
         // nanoserver-ltsc2022 and windowservercore-ltsc2022
         case ~/.*2/:
             platform = 'windows-2022'
             break
 
-        // TODO: to be replaced by ~/*server*/, when using Windows 2025 agents by default for Windows images
-        // cf https://github.com/jenkins-infra/helpdesk/issues/4956
         // nanoserver-ltsc2025 and windowservercore-ltsc2025
         case ~/.*5/:
             platform = 'windows-2025'
