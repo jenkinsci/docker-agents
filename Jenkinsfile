@@ -1,5 +1,3 @@
-@Library('pipeline-library@pull/985/head') _
-
 final String cronExpr = env.BRANCH_IS_PRIMARY ? '@daily' : ''
 
 properties([
@@ -8,7 +6,7 @@ properties([
     pipelineTriggers([cron(cronExpr)]),
 ])
 
-def agentSelector(String imageType, spotRetryCounter) {
+def agentSelector(String imageType, retryCounter) {
     def platform
     switch (imageType) {
         // nanoserver-1809, nanoserver-ltsc2019 and windowservercore-ltsc2019
@@ -37,7 +35,7 @@ def agentSelector(String imageType, spotRetryCounter) {
     return infra.getBuildAgentLabel([
         useContainerAgent: false,
         platform: platform,
-        spotRetryCounter: spotRetryCounter
+        spotRetryCounter: retryCounter
     ])
 }
 
