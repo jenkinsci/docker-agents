@@ -1,3 +1,5 @@
+@Library('pipeline-library@pull/985/head') _
+
 final String cronExpr = env.BRANCH_IS_PRIMARY ? '@daily' : ''
 
 properties([
@@ -32,7 +34,11 @@ def agentSelector(String imageType, spotRetryCounter) {
     }
 
     // Defined in https://github.com/jenkins-infra/pipeline-library/blob/master/vars/infra.groovy
-    return infra.getBuildAgentLabel(platform, '', false, spotRetryCounter)
+    return infra.getBuildAgentLabel([
+        useContainerAgent: false,
+        platform: platform,
+        spotRetryCounter: spotRetryCounter
+    ])
 }
 
 // Specify parallel stages
