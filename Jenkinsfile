@@ -10,17 +10,17 @@ def agentSelector(String imageType, retryCounter) {
     def platform
     switch (imageType) {
         // nanoserver-1809, nanoserver-ltsc2019 and windowservercore-ltsc2019
-        case ~/.*9/:
+        case ~/.*(1809|2019)/:
             platform = 'windows-2019'
             break
 
         // nanoserver-ltsc2022 and windowservercore-ltsc2022
-        case ~/.*2/:
+        case ~/.*2022/:
             platform = 'windows-2022'
             break
 
         // nanoserver-ltsc2025 and windowservercore-ltsc2025
-        case ~/.*5/:
+        case ~/.*2025/:
             platform = 'windows-2025'
             break
 
