@@ -6,38 +6,37 @@ properties([
     pipelineTriggers([cron(cronExpr)]),
 ])
 
-def agentSelector(String imageType) {
-    // Linux agent
-    if (imageType == 'linux') {
-        // This function is defined in the jenkins-infra/pipeline-library
-        if (infra.isTrusted()) {
-            return 'linux'
-        } else {
-            // Need Docker and a LOT of memory for faster builds (due to multi archs) or fallback to linux (trusted.ci)
-            return 'docker-highmem'
-        }
-    }
-    // Windows Server Core 2022 agent
-    if (imageType.contains('2022')) {
-        return 'windows-2022'
-    }
-    // Windows Server Core 2019 agent (for nanoserver 1809 & ltsc2019 and for windowservercore ltsc2019)
-    return 'windows-2019'
-}
+def agentSelector(String imageType, retryCounter) {
+    def platform
+    switch (imageType) {
+        // nanoserver-1809, nanoserver-ltsc2019 and windowservercore-ltsc2019
+        case ~/.*(1809|2019)/:
+            platform = 'windows-2019'
+            break
 
-// Ref. https://github.com/jenkins-infra/pipeline-library/pull/917
-def spotAgentSelector(String agentLabel, int counter) {
-    // This function is defined in the jenkins-infra/pipeline-library
-    if (infra.isTrusted()) {
-        // Return early if on trusted (no spot agent)
-        return agentLabel
+        // nanoserver-ltsc2022 and windowservercore-ltsc2022
+        case ~/.*2022/:
+            platform = 'windows-2022'
+            break
+
+        // nanoserver-ltsc2025 and windowservercore-ltsc2025
+        case ~/.*2025/:
+            platform = 'windows-2025'
+            break
+
+        // Linux
+        default:
+            // Need Docker and a LOT of memory for faster builds (due to multi archs)
+            platform = 'docker-highmem'
+            break
     }
 
-    if (counter > 1) {
-        return agentLabel + ' && nonspot'
-    }
-
-    return agentLabel + ' && spot'
+    // Defined in https://github.com/jenkins-infra/pipeline-library/blob/master/vars/infra.groovy
+    return infra.getBuildAgentLabel([
+        useContainerAgent: false,
+        platform: platform,
+        spotRetryCounter: retryCounter
+    ])
 }
 
 // Specify parallel stages
@@ -56,7 +55,7 @@ def parallelStages = [failFast: false]
             int retryCounter = 0
             retry(count: 2, conditions: [agent(), nonresumable()]) {
                 // Use local variable to manage concurrency and increment BEFORE spinning up any agent
-                final String resolvedAgentLabel = spotAgentSelector(agentSelector(imageType), retryCounter)
+                final String resolvedAgentLabel = agentSelector(imageType, retryCounter)
                 retryCounter++
                 node(resolvedAgentLabel) {
                     timeout(time: 60, unit: 'MINUTES') {
