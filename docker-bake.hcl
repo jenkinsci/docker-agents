@@ -1,3 +1,191 @@
+## Variables
+variable "agent_types_to_build" {
+  default = ["agent", "inbound-agent"]
+}
+
+variable "jdks_to_build" {
+  default = [17, 21, 25]
+}
+variable "default_jdk" {
+  default = 17
+}
+
+variable "jdks_in_preview" {
+  default = []
+}
+
+variable "JAVA17_VERSION" {
+  default = "17.0.17_10"
+}
+
+variable "JAVA21_VERSION" {
+  default = "21.0.10_7"
+}
+
+variable "JAVA25_VERSION" {
+  default = "25.0.2_10"
+}
+
+variable "REMOTING_VERSION" {
+  default = "3355.v388858a_47b_33"
+}
+
+variable "REGISTRY" {
+  default = "docker.io"
+}
+
+variable "REGISTRY_ORG" {
+  default = "jenkins"
+}
+
+variable "REGISTRY_REPO_AGENT" {
+  default = "agent"
+}
+
+variable "REGISTRY_REPO_INBOUND_AGENT" {
+  default = "inbound-agent"
+}
+
+variable "BUILD_NUMBER" {
+  default = "1"
+}
+
+variable "ON_TAG" {
+  default = "false"
+}
+
+variable "ALPINE_FULL_TAG" {
+  default = "3.23.3"
+}
+
+variable "ALPINE_SHORT_TAG" {
+  default = regex_replace(ALPINE_FULL_TAG, "\\.\\d+$", "")
+}
+
+variable "DEBIAN_RELEASE" {
+  default = "trixie-20260202"
+}
+
+variable "UBI9_TAG" {
+  default = "9.7-1769417801"
+}
+
+# Set this value to a specific Windows version to override Windows versions to build returned by windowsversions function
+variable "WINDOWS_VERSION_OVERRIDE" {
+  default = ""
+}
+
+# Set this value to a specific agent type to override agent type to build returned by windowsagenttypes function
+variable "WINDOWS_AGENT_TYPE_OVERRIDE" {
+  default = ""
+}
+
+variable "jdk_versions" {
+  default = {
+    17 = JAVA17_VERSION
+    21 = JAVA21_VERSION
+    25 = JAVA25_VERSION
+  }
+}
+
+## Targets
+target "alpine" {
+  matrix = {
+    type = agent_types_to_build
+    jdk  = jdks_to_build
+  }
+  name       = "${type}_alpine_jdk${jdk}"
+  target     = type
+  dockerfile = "alpine/Dockerfile"
+  context    = "."
+  args = {
+    ALPINE_TAG   = ALPINE_FULL_TAG
+    VERSION      = REMOTING_VERSION
+    JAVA_VERSION = "${javaversion(jdk)}"
+  }
+  tags      = concat(linux_tags(type, jdk, "alpine"), linux_tags(type, jdk, "alpine${ALPINE_SHORT_TAG}"))
+  platforms = alpine_platforms(jdk)
+}
+
+target "debian" {
+  matrix = {
+    type = agent_types_to_build
+    jdk  = jdks_to_build
+  }
+  name       = "${type}_debian_jdk${jdk}"
+  target     = type
+  dockerfile = "debian/Dockerfile"
+  context    = "."
+  args = {
+    VERSION        = REMOTING_VERSION
+    DEBIAN_RELEASE = DEBIAN_RELEASE
+    JAVA_VERSION   = "${javaversion(jdk)}"
+  }
+  tags      = linux_tags(type, jdk, "debian")
+  platforms = debian_platforms(jdk)
+}
+
+target "rhel_ubi9" {
+  matrix = {
+    type = agent_types_to_build
+    jdk  = jdks_to_build
+  }
+  name       = "${type}_rhel_ubi9_jdk${jdk}"
+  target     = type
+  dockerfile = "rhel/ubi9/Dockerfile"
+  context    = "."
+  args = {
+    UBI9_TAG     = UBI9_TAG
+    VERSION      = REMOTING_VERSION
+    JAVA_VERSION = "${javaversion(jdk)}"
+  }
+  tags      = linux_tags(type, jdk, "rhel-ubi9")
+  platforms = rhel_ubi9_platforms(jdk)
+}
+
+target "nanoserver" {
+  matrix = {
+    type            = windowsagenttypes(WINDOWS_AGENT_TYPE_OVERRIDE)
+    jdk             = jdks_to_build
+    windows_version = windowsversions("nanoserver")
+  }
+  name       = "${type}_nanoserver-${windows_version}_jdk${jdk}"
+  dockerfile = "windows/nanoserver/Dockerfile"
+  context    = "."
+  args = {
+    JAVA_HOME             = "C:/openjdk-${jdk}"
+    JAVA_VERSION          = "${replace(javaversion(jdk), "_", "+")}"
+    TOOLS_WINDOWS_VERSION = "${toolsversion(windows_version)}"
+    VERSION               = REMOTING_VERSION
+    WINDOWS_VERSION_TAG   = windows_version
+  }
+  target    = type
+  tags      = windows_tags(type, jdk, "nanoserver-${windows_version}")
+  platforms = ["windows/amd64"]
+}
+
+target "windowsservercore" {
+  matrix = {
+    type            = windowsagenttypes(WINDOWS_AGENT_TYPE_OVERRIDE)
+    jdk             = jdks_to_build
+    windows_version = windowsversions("windowsservercore")
+  }
+  name       = "${type}_windowsservercore-${windows_version}_jdk${jdk}"
+  dockerfile = "windows/windowsservercore/Dockerfile"
+  context    = "."
+  args = {
+    JAVA_HOME             = "C:/openjdk-${jdk}"
+    JAVA_VERSION          = "${replace(javaversion(jdk), "_", "+")}"
+    TOOLS_WINDOWS_VERSION = "${toolsversion(windows_version)}"
+    VERSION               = REMOTING_VERSION
+    WINDOWS_VERSION_TAG   = windows_version
+  }
+  target    = type
+  tags      = windows_tags(type, jdk, "windowsservercore-${windows_version}")
+  platforms = ["windows/amd64"]
+}
+
+## Groups
 group "linux" {
   targets = [
     "alpine",
@@ -40,94 +228,6 @@ group "linux-ppc64le" {
   ]
 }
 
-variable "agent_types_to_build" {
-  default = ["agent", "inbound-agent"]
-}
-
-variable "jdks_to_build" {
-  default = [17, 21, 25]
-}
-variable "default_jdk" {
-  default = 17
-}
-
-variable "jdks_in_preview" {
-  default = []
-}
-
-variable "JAVA17_VERSION" {
-  default = "17.0.16_8"
-}
-
-variable "JAVA21_VERSION" {
-  default = "21.0.8_9"
-}
-
-variable "JAVA25_VERSION" {
-  default = "25_36"
-}
-
-variable "REMOTING_VERSION" {
-  default = "3345.v03dee9b_f88fc"
-}
-
-variable "REGISTRY" {
-  default = "docker.io"
-}
-
-variable "REGISTRY_ORG" {
-  default = "jenkins"
-}
-
-variable "REGISTRY_REPO_AGENT" {
-  default = "agent"
-}
-
-variable "REGISTRY_REPO_INBOUND_AGENT" {
-  default = "inbound-agent"
-}
-
-variable "BUILD_NUMBER" {
-  default = "1"
-}
-
-variable "ON_TAG" {
-  default = "false"
-}
-
-variable "ALPINE_FULL_TAG" {
-  default = "3.22.2"
-}
-
-variable "ALPINE_SHORT_TAG" {
-  default = regex_replace(ALPINE_FULL_TAG, "\\.\\d+$", "")
-}
-
-variable "DEBIAN_RELEASE" {
-  default = "trixie-20250929"
-}
-
-variable "UBI9_TAG" {
-  default = "9.6-1758184894"
-}
-
-# Set this value to a specific Windows version to override Windows versions to build returned by windowsversions function
-variable "WINDOWS_VERSION_OVERRIDE" {
-  default = ""
-}
-
-# Set this value to a specific agent type to override agent type to build returned by windowsagenttypes function
-variable "WINDOWS_AGENT_TYPE_OVERRIDE" {
-  default = ""
-}
-
-variable "jdk_versions" {
-  default = {
-    17 = JAVA17_VERSION
-    21 = JAVA21_VERSION
-    25 = JAVA25_VERSION
-  }
-}
 
 ## Common functions
 # Return the registry organization and repository depending on the agent type
@@ -272,100 +372,4 @@ function "windows_tags" {
     equal(ON_TAG, "true") ? (is_default_jdk(jdk) ? "${REGISTRY}/${orgrepo(type)}:${flavor_and_version}" : "") : "",
     "${REGISTRY}/${orgrepo(type)}:jdk${preview_tag(jdk)}-${flavor_and_version}",
   ]
-}
-
-target "alpine" {
-  matrix = {
-    type = agent_types_to_build
-    jdk  = jdks_to_build
-  }
-  name       = "${type}_alpine_jdk${jdk}"
-  target     = type
-  dockerfile = "alpine/Dockerfile"
-  context    = "."
-  args = {
-    ALPINE_TAG   = ALPINE_FULL_TAG
-    VERSION      = REMOTING_VERSION
-    JAVA_VERSION = "${javaversion(jdk)}"
-  }
-  tags      = concat(linux_tags(type, jdk, "alpine"), linux_tags(type, jdk, "alpine${ALPINE_SHORT_TAG}"))
-  platforms = alpine_platforms(jdk)
-}
-
-target "debian" {
-  matrix = {
-    type = agent_types_to_build
-    jdk  = jdks_to_build
-  }
-  name       = "${type}_debian_jdk${jdk}"
-  target     = type
-  dockerfile = "debian/Dockerfile"
-  context    = "."
-  args = {
-    VERSION        = REMOTING_VERSION
-    DEBIAN_RELEASE = DEBIAN_RELEASE
-    JAVA_VERSION   = "${javaversion(jdk)}"
-  }
-  tags      = linux_tags(type, jdk, "debian")
-  platforms = debian_platforms(jdk)
-}
-
-target "rhel_ubi9" {
-  matrix = {
-    type = agent_types_to_build
-    jdk  = jdks_to_build
-  }
-  name       = "${type}_rhel_ubi9_jdk${jdk}"
-  target     = type
-  dockerfile = "rhel/ubi9/Dockerfile"
-  context    = "."
-  args = {
-    UBI9_TAG     = UBI9_TAG
-    VERSION      = REMOTING_VERSION
-    JAVA_VERSION = "${javaversion(jdk)}"
-  }
-  tags      = linux_tags(type, jdk, "rhel-ubi9")
-  platforms = rhel_ubi9_platforms(jdk)
-}
-
-target "nanoserver" {
-  matrix = {
-    type            = windowsagenttypes(WINDOWS_AGENT_TYPE_OVERRIDE)
-    jdk             = jdks_to_build
-    windows_version = windowsversions("nanoserver")
-  }
-  name       = "${type}_nanoserver-${windows_version}_jdk${jdk}"
-  dockerfile = "windows/nanoserver/Dockerfile"
-  context    = "."
-  args = {
-    JAVA_HOME             = "C:/openjdk-${jdk}"
-    JAVA_VERSION          = "${replace(javaversion(jdk), "_", "+")}"
-    TOOLS_WINDOWS_VERSION = "${toolsversion(windows_version)}"
-    VERSION               = REMOTING_VERSION
-    WINDOWS_VERSION_TAG   = windows_version
-  }
-  target    = type
-  tags      = windows_tags(type, jdk, "nanoserver-${windows_version}")
-  platforms = ["windows/amd64"]
-}
-
-target "windowsservercore" {
-  matrix = {
-    type            = windowsagenttypes(WINDOWS_AGENT_TYPE_OVERRIDE)
-    jdk             = jdks_to_build
-    windows_version = windowsversions("windowsservercore")
-  }
-  name       = "${type}_windowsservercore-${windows_version}_jdk${jdk}"
-  dockerfile = "windows/windowsservercore/Dockerfile"
-  context    = "."
-  args = {
-    JAVA_HOME             = "C:/openjdk-${jdk}"
-    JAVA_VERSION          = "${replace(javaversion(jdk), "_", "+")}"
-    TOOLS_WINDOWS_VERSION = "${toolsversion(windows_version)}"
-    VERSION               = REMOTING_VERSION
-    WINDOWS_VERSION_TAG   = windows_version
-  }
-  target    = type
-  tags      = windows_tags(type, jdk, "windowsservercore-${windows_version}")
-  platforms = ["windows/amd64"]
 }

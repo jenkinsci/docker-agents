@@ -7,7 +7,7 @@ OPTIND=1
 
 target="build"
 build_number="1"
-remoting_version="3345.v03dee9b_f88fc"
+remoting_version="3355.v388858a_47b_33"
 exit_result=0
 
 function exit_if_error() {

@@ -1,4 +1,4 @@
-ARG UBI9_TAG=9.6-1758184894
+ARG UBI9_TAG=9.7-1769417801
 FROM registry.access.redhat.com/ubi9/ubi:"${UBI9_TAG}" AS jre-build
 SHELL ["/bin/bash", "-e", "-u", "-o", "pipefail", "-c"]
 
@@ -9,7 +9,7 @@ ARG TARGETPLATFORM
 COPY adoptium-get-jdk-link.sh /usr/bin/local/adoptium-get-jdk-link.sh
 COPY adoptium-install-jdk.sh /usr/bin/local/adoptium-install-jdk.sh
 
-ARG JAVA_VERSION=17.0.16_8
+ARG JAVA_VERSION=17.0.17_10
 
 RUN dnf install --disableplugin=subscription-manager --setopt=install_weak_deps=0 --setopt=tsflags=nodocs --allowerasing -y \
     ca-certificates \
@@ -23,10 +23,17 @@ ENV PATH="/opt/jdk-${JAVA_VERSION}/bin:${PATH}"
 # Generate smaller java runtime without unneeded files
 # for now we include the full module path to maintain compatibility
 # while still saving space (approx 200mb from the full distribution)
-RUN case "$(jlink --version 2>&1 | cut -c1-2)" in \
-      "17") options="--compress=2 --add-modules ALL-MODULE-PATH --module-path /opt/jdk-${JAVA_VERSION}/jmods" ;; \
-      "21") options="--compress=zip-6 --add-modules ALL-MODULE-PATH --module-path /opt/jdk-${JAVA_VERSION}/jmods" ;; \
-      "25") options="--compress=zip-6 --add-modules java.base,java.logging,java.xml,java.se" ;; \
+RUN java_major_version="$(jlink --version 2>&1 | cut -c1-2)"; \
+  if [[ "${TARGETPLATFORM}" == "linux/arm/v7" || "${java_major_version}" == 25 ]]; then \
+    # It is acceptable to have a larger image in arm/v7 (arm 32 bits) environment
+    # because jlink fails with the error "jmods: Value too large for defined data type" error.
+    # For JDK25, we need to have a proper test and validation process first cf https://github.com/jenkinsci/docker-agents/issues/1124)
+    # Noting there isn't any JMODs shipped anymore since https://adoptium.net/en-GB/news/2025/08/eclipse-temurin-jdk24-JEP493-enabled
+    cp -r "/opt/jdk-${JAVA_VERSION}" /javaruntime; \
+  else \
+    case "$(jlink --version 2>&1 | cut -c1-2)" in \
+      "17") options="--compress=2 --add-modules ALL-MODULE-PATH" ;; \
+      "21") options="--compress=zip-6 --add-modules ALL-MODULE-PATH" ;; \
       *) echo "ERROR: unmanaged jlink version pattern" && exit 1 ;; \
     esac; \
     jlink \
@@ -34,7 +41,8 @@ RUN case "$(jlink --version 2>&1 | cut -c1-2)" in \
       ${options} \
       --no-man-pages \
       --no-header-files \
-      --output /javaruntime
+      --output /javaruntime; \
+  fi
 
 FROM registry.access.redhat.com/ubi9/ubi:"${UBI9_TAG}" AS agent
 
@@ -53,7 +61,6 @@ RUN dnf install --disableplugin=subscription-manager --setopt=install_weak_deps=
       ca-certificates \
       fontconfig \
       git \
-      git-lfs \
       less \
       patch \
       tzdata \
@@ -63,6 +70,14 @@ ARG VERSION=3261.v9c670a_4748a_9
 ADD --chown="${user}":"${group}" "https://repo.jenkins-ci.org/public/org/jenkins-ci/main/remoting/${VERSION}/remoting-${VERSION}.jar" /usr/share/jenkins/agent.jar
 RUN chmod 0644 /usr/share/jenkins/agent.jar \
     && ln -sf /usr/share/jenkins/agent.jar /usr/share/jenkins/slave.jar
+
+ARG GIT_LFS_VERSION=3.7.1
+RUN arch=$(uname -m | sed -e 's/x86_64/amd64/g' -e 's/aarch64/arm64/g') \
+  && curl -L -s -o git-lfs.tgz "https://github.com/git-lfs/git-lfs/releases/download/v${GIT_LFS_VERSION}/git-lfs-linux-${arch}-v${GIT_LFS_VERSION}.tar.gz" \
+  && tar xzf git-lfs.tgz \
+  && bash git-lfs-*/install.sh \
+  && git lfs install --skip-repo --system \
+  && rm -rf git-lfs*
 
 ENV LANG=C.UTF-8
 
@@ -84,7 +99,7 @@ LABEL \
   org.opencontainers.image.description="This is a base image, which provides the Jenkins agent executable (agent.jar)" \
   org.opencontainers.image.version="${VERSION}" \
   org.opencontainers.image.url="https://www.jenkins.io/" \
-  org.opencontainers.image.source="https://github.com/jenkinsci/docker-agent" \
+  org.opencontainers.image.source="https://github.com/jenkinsci/docker-agents" \
   org.opencontainers.image.licenses="MIT"
 
 ## Inbound Agent image target
@@ -104,7 +119,7 @@ LABEL \
   org.opencontainers.image.description="This is an image for Jenkins agents using TCP or WebSockets to establish inbound connection to the Jenkins controller" \
   org.opencontainers.image.version="${VERSION}" \
   org.opencontainers.image.url="https://www.jenkins.io/" \
-  org.opencontainers.image.source="https://github.com/jenkinsci/docker-agent" \
+  org.opencontainers.image.source="https://github.com/jenkinsci/docker-agents" \
   org.opencontainers.image.licenses="MIT"
 
 ENTRYPOINT ["/usr/local/bin/jenkins-agent"]

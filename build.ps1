@@ -4,7 +4,7 @@ Param(
     # Default build.ps1 target
     [String] $Target = 'build',
     # Remoting version to include
-    [String] $RemotingVersion = '3345.v03dee9b_f88fc',
+    [String] $RemotingVersion = '3355.v388858a_47b_33',
     # Type of agent ("agent" or "inbound-agent")
     [String] $AgentType = '',
     # Windows flavor and windows version to build
@@ -211,14 +211,7 @@ foreach($agentType in $AgentTypes) {
             $mod = Get-InstalledModule -Name Pester -MinimumVersion 5.3.0 -MaximumVersion 5.3.3 -ErrorAction SilentlyContinue
             if ($null -eq $mod) {
                 Write-Host '= TEST: Pester 5.3.x not found: installing...'
-                $module = 'C:\Program Files\WindowsPowerShell\Modules\Pester'
-                if (Test-Path $module) {
-                    takeown /F $module /A /R
-                    icacls $module /reset
-                    icacls $module /grant Administrators:'F' /inheritance:d /T
-                    Remove-Item -Path $module -Recurse -Force -Confirm:$false
-                }
-                Install-Module -Force -Name Pester -MaximumVersion 5.3.3
+                Install-Module -Force -Name Pester -MaximumVersion 5.3.3 -Scope CurrentUser
             }
 
             Import-Module Pester

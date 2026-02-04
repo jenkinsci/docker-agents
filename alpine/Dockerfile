@@ -19,7 +19,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 #  THE SOFTWARE.
-ARG ALPINE_TAG=3.22.2
+ARG ALPINE_TAG=3.23.3
 FROM alpine:"${ALPINE_TAG}" AS jre-build
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
@@ -31,7 +31,7 @@ ARG TARGETPLATFORM
 COPY adoptium-get-jdk-link.sh /usr/bin/local/adoptium-get-jdk-link.sh
 COPY adoptium-install-jdk.sh /usr/bin/local/adoptium-install-jdk.sh
 
-ARG JAVA_VERSION=17.0.16_8
+ARG JAVA_VERSION=17.0.17_10
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
     ca-certificates \
@@ -41,10 +41,17 @@ RUN apk add --no-cache \
 
 ENV PATH="/opt/jdk-${JAVA_VERSION}/bin:${PATH}"
 
-RUN case "$(jlink --version 2>&1 | cut -c1-2)" in \
+RUN java_major_version="$(jlink --version 2>&1 | cut -c1-2)"; \
+  if [[ "${TARGETPLATFORM}" == "linux/arm/v7" || "${java_major_version}" == 25 ]]; then \
+    # It is acceptable to have a larger image in arm/v7 (arm 32 bits) environment
+    # because jlink fails with the error "jmods: Value too large for defined data type" error.
+    # For JDK25, we need to have a proper test and validation process first cf https://github.com/jenkinsci/docker-agents/issues/1124)
+    # Noting there isn't any JMODs shipped anymore since https://adoptium.net/en-GB/news/2025/08/eclipse-temurin-jdk24-JEP493-enabled
+    cp -r "/opt/jdk-${JAVA_VERSION}" /javaruntime; \
+  else \
+    case "$(jlink --version 2>&1 | cut -c1-2)" in \
       "17") options="--compress=2 --add-modules ALL-MODULE-PATH" ;; \
       "21") options="--compress=zip-6 --add-modules ALL-MODULE-PATH" ;; \
-      "25") options="--compress=zip-6 --add-modules java.base,java.logging,java.xml,java.se" ;; \
       *) echo "ERROR: unmanaged jlink version pattern" && exit 1 ;; \
     esac; \
     jlink \
@@ -52,7 +59,8 @@ RUN case "$(jlink --version 2>&1 | cut -c1-2)" in \
       ${options} \
       --no-man-pages \
       --no-header-files \
-      --output /javaruntime
+      --output /javaruntime; \
+  fi
 
 ## Agent image target
 FROM alpine:"${ALPINE_TAG}" AS agent
@@ -76,7 +84,6 @@ RUN apk add --no-cache \
       curl \
       bash \
       git \
-      git-lfs \
       musl-locales \
       openssh-client \
       openssl \
@@ -85,11 +92,18 @@ RUN apk add --no-cache \
       tzdata-utils \
     && rm -rf /tmp/*.apk /tmp/gcc /tmp/gcc-libs.tar* /tmp/libz /tmp/libz.tar.xz /var/cache/apk/*
 
-ARG VERSION=3345.v03dee9b_f88fc
+ARG VERSION=3355.v388858a_47b_33
 ADD --chown="${user}":"${group}" "https://repo.jenkins-ci.org/public/org/jenkins-ci/main/remoting/${VERSION}/remoting-${VERSION}.jar" /usr/share/jenkins/agent.jar
 RUN chmod 0644 /usr/share/jenkins/agent.jar \
   && ln -sf /usr/share/jenkins/agent.jar /usr/share/jenkins/slave.jar
 
+ARG GIT_LFS_VERSION=3.7.1
+RUN arch=$(uname -m | sed -e 's/x86_64/amd64/g' -e 's/aarch64/arm64/g') \
+  && curl -L -s -o git-lfs.tgz "https://github.com/git-lfs/git-lfs/releases/download/v${GIT_LFS_VERSION}/git-lfs-linux-${arch}-v${GIT_LFS_VERSION}.tar.gz" \
+  && tar xzf git-lfs.tgz \
+  && bash git-lfs-*/install.sh \
+  && git lfs install --skip-repo --system \
+  && rm -rf git-lfs*
 
 ENV JAVA_HOME=/opt/java/openjdk
 COPY --from=jre-build /javaruntime "$JAVA_HOME"
@@ -109,7 +123,7 @@ LABEL \
     org.opencontainers.image.description="This is a base image, which provides the Jenkins agent executable (agent.jar)" \
     org.opencontainers.image.version="${VERSION}" \
     org.opencontainers.image.url="https://www.jenkins.io/" \
-    org.opencontainers.image.source="https://github.com/jenkinsci/docker-agent" \
+    org.opencontainers.image.source="https://github.com/jenkinsci/docker-agents" \
     org.opencontainers.image.licenses="MIT"
 
 ## Inbound Agent image target
@@ -129,7 +143,7 @@ LABEL \
     org.opencontainers.image.description="This is an image for Jenkins agents using TCP or WebSockets to establish inbound connection to the Jenkins controller" \
     org.opencontainers.image.version="${VERSION}" \
     org.opencontainers.image.url="https://www.jenkins.io/" \
-    org.opencontainers.image.source="https://github.com/jenkinsci/docker-agent" \
+    org.opencontainers.image.source="https://github.com/jenkinsci/docker-agents" \
     org.opencontainers.image.licenses="MIT"
 
 ENTRYPOINT ["/usr/local/bin/jenkins-agent"]
