@@ -48,56 +48,7 @@ docker run -i --rm --name agent1 --init -v agent1-workdir:C:/Users/jenkins/Work 
 
 ## Configurations
 
-The image has several supported configurations, which can be accessed via the following tags:
-
-* Linux Images:
-  * Java 17 (default):
-    * `jenkins/agent:latest`: Based on `debian:trixie-${builddate}`
-      * Also tagged as: 
-        * `jenkins/agent:jdk17`
-        * `jenkins/agent:trixie-jdk17`
-        * `jenkins/agent:latest-trixie`
-        * `jenkins/agent:latest-trixie-jdk17`
-        * `jenkins/agent:latest-jdk17`
-    * alpine (Small image based on Alpine Linux, based on `alpine:${version}`):
-      * `jenkins/agent:alpine` 
-      * `jenkins/agent:alpine-jdk17`
-      * `jenkins/agent:latest-alpine`
-      * `jenkins/agent:latest-alpine-jdk17`
-    * rhel-ubi9 (Based on Red Hat Universal Base Image 9)
-      * `jenkins/agent:rhel-ubi9`
-      * `jenkins/agent:rhel-ubi9-jdk17`
-      * `jenkins/agent:latest-rhel-ubi9`
-      * `jenkins/agent:latest-rhel-ubi9-jdk17`
-  * Java 21:
-    * trixie (Based on `debian:trixie-${builddate}`):
-      * `jenkins/agent:trixie`
-      * `jenkins/agent:trixie-jdk21`
-      * `jenkins/agent:jdk21`
-      * `jenkins/agent:latest-trixie-jdk21`
-    * alpine (Small image based on Alpine Linux, based on `alpine:${version}`):
-      * `jenkins/agent:alpine-jdk21`
-      * `jenkins/agent:latest-alpine`
-      * `jenkins/agent:latest-alpine-jdk21`
-    * rhel-ubi9 (Based on Red Hat Universal Base Image 9)
-      * `jenkins/agent:rhel-ubi9-jdk21`
-      * `jenkins/agent:latest-rhel-ubi9-jdk21`
-
-* Windows Images:
-  * Java 17 (default):
-    * Latest Jenkins agent version on Windows Nano Server and Java 17:
-      * `jenkins/agent:jdk17-nanoserver-1809`
-      * `jenkins/agent:jdk17-nanoserver-ltsc2019`
-      * `jenkins/agent:jdk17-nanoserver-ltsc2022`
-  * Java 21:
-    * Latest Jenkins agent version on Windows Nano Server and Java 21:
-      * `jenkins/agent:jdk21-nanoserver-1809`
-      * `jenkins/agent:jdk21-nanoserver-ltsc2019`
-      * `jenkins/agent:jdk21-nanoserver-ltsc2022`
-    * Latest Jenkins agent version on Windows Server Core with Java 21:
-      * `jenkins/agent:jdk21-windowsservercore-1809`
-      * `jenkins/agent:jdk21-windowsservercore-ltsc2019`
-      * `jenkins/agent:jdk21-windowsservercore-ltsc2022`
+The image has several supported configurations, which can be accessed via the lists of tags that can be consulted at https://github.com/jenkinsci/docker-agents/tree/master/tests/golden/
 
 The file [docker-bake.hcl](https://github.com/jenkinsci/docker-agents/blob/master/docker-bake.hcl) defines all the configuration for Linux images and their associated tags.
 

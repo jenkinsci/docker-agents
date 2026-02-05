@@ -1,6 +1,6 @@
 Import-Module -DisableNameChecking -Force $PSScriptRoot/test_helpers.psm1
 
-$global:IMAGE_NAME = Get-EnvOrDefault 'IMAGE_NAME' '' # Ex: jenkins/agent:jdk17-nanoserver-1809
+$global:IMAGE_NAME = Get-EnvOrDefault 'IMAGE_NAME' '' # Ex: jenkins/agent:ltsc2022
 $global:VERSION = Get-EnvOrDefault 'VERSION' ''
 $global:JAVA_VERSION = Get-EnvOrDefault 'JAVA_VERSION' ''
 

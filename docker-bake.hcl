@@ -266,16 +266,13 @@ function "debian_platforms" {
 }
 
 # Return array of Windows version(s) to build
-# There is no mcr.microsoft.com/windows/servercore:1809 image
 # Can be overriden by setting WINDOWS_VERSION_OVERRIDE to a specific Windows version
-# Ex: WINDOWS_VERSION_OVERRIDE=1809 docker buildx bake windows
+# Ex: WINDOWS_VERSION_OVERRIDE=ltsc2025 docker buildx bake windows
 function "windowsversions" {
   params = [flavor]
   result = (notequal(WINDOWS_VERSION_OVERRIDE, "")
     ? [WINDOWS_VERSION_OVERRIDE]
-    : (equal(flavor, "windowsservercore")
-      ? ["ltsc2019", "ltsc2022"]
-  : ["1809", "ltsc2019", "ltsc2022"]))
+    : ["ltsc2019", "ltsc2022"])
 }
 
 # Return array of agent type(s) to build
