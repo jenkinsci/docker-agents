@@ -110,7 +110,7 @@ def parallelStages = [failFast: false]
                         // then we build all the CPU architectures
                         stage('Build multiarch') {
                             if (isUnix()) {
-                                sh 'make every-build'
+                                sh 'make "multiarchbuild${MAKE_TARGET_SUFFIX}"'
                             } else {
                                 // No multiarch images for Windows, (re)building them here on both controllers
                                 powershell './make.ps1 build'

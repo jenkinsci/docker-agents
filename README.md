@@ -194,7 +194,7 @@ make test-inbound-agent_debian_jdk17
 You can build all images for your OS (even those unsupported by your current architecture) by running:
 
 ```bash
-make every-build
+make multiarchbuild
 ```
 
 #### Other `make` targets
