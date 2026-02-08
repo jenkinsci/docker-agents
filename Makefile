@@ -85,11 +85,11 @@ build-%: check-reqs target show-%
 	@echo "== building $*"
 	@set -x; $(bake_cli) --metadata-file=target/build-result-metadata_$*.json --set '*.platform=$(OS)/$(ARCH)' '$*'
 
-# Build all default targets depending on the current OS but independently of the architecture
+# Build default bake group corresponding to the current OS but independently of the architecture
 multiarchbuild: check-reqs show-$(OS)
 	@set -x; $(bake_base_cli) $(OS)
 
-# Build a specific target independently of the architecture or the OS
+# Build a specific bake group or target independently of the architecture or the OS
 multiarchbuild-%: check-reqs show-%
 	@set -x; $(bake_base_cli) $*
 

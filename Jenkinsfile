@@ -85,20 +85,19 @@ def parallelStages = [failFast: false]
                         // No single arch build or test on trusted.ci.jenkins.io
                         if (!infra.isTrusted()) {
                             // Build current arch for Linux images
-                            if (isUnix()) {
-                                stage('Build current arch') {
+                            stage('Build current arch') {
+                                if (isUnix()) {
                                     sh 'make "build${MAKE_TARGET_SUFFIX}"'
+                                } else {
+                                    // No multiarch Windows images
+                                    powershell './make.ps1 build'
                                 }
-                            } else {
-                                // No multiarch Windows images
-                                powershell './make.ps1 build'
                             }
 
                             stage('Test') {
                                 if (isUnix()) {
                                     sh 'make "test${MAKE_TARGET_SUFFIX}"'
                                 } else {
-                                    // This target builds images first
                                     powershell './make.ps1 test'
                                 }
                                 junit(allowEmptyResults: true, keepLongStdio: true, testResults: 'target/**/junit-results*.xml')
