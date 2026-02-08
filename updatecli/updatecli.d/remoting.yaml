@@ -88,10 +88,10 @@ targets:
         remoting_version="{{ source "lastVersion" }}"
     scmid: default
   setWindowsBuildPwshRemotingVersion:
-    name: Bump the Jenkins remoting version on the windows build.ps1 file
+    name: Bump the Jenkins remoting version on the windows make.ps1 file
     kind: file
     spec:
-      file: build.ps1
+      file: make.ps1
       matchpattern: >-
         \$RemotingVersion(.*)=(.*),
       replacepattern: >-
