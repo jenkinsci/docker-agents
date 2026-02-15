@@ -143,7 +143,12 @@ def parallelStages = [failFast: false]
                                 // This function is defined in the jenkins-infra/pipeline-library
                                 infra.withDockerCredentials {
                                     if (isUnix()) {
-                                        sh 'make "publish${MAKE_TARGET_SUFFIX}"'
+                                        if (imageType != 'linux') {
+                                            sh 'make "publish${MAKE_TARGET_SUFFIX}"'
+                                        } else {
+                                            // Batch Linux images publication by distribution to avoid 429 rate limit errors from Docker Hub
+                                            sh 'make listgroup-linux | xargs -I {} make "publish-{}"'
+                                        }
                                     } else {
                                         powershell './make.ps1 publish'
                                     }

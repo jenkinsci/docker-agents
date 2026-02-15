@@ -125,6 +125,10 @@ list-%: check-reqs
 listarch-%: check-reqs
 	@set -x; make --silent showarch-$* | jq -r '.target | keys[]'
 
+# Return the list of targets of a specific bake group
+listgroup-%: check-reqs
+	@set -x; make --silent show-$* | jq -r '.group | keys[]' | grep -v -e $* -e default
+
 # Ensure bats exists in the current folder
 bats:
 	git clone --branch v1.13.0 https://github.com/bats-core/bats-core ./bats
