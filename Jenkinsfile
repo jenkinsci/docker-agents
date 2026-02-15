@@ -39,6 +39,20 @@ def agentSelector(String imageType, retryCounter) {
     ])
 }
 
+// Defaul values
+def tagWithOneDashExist = false
+def remotingVersion = '3355.v388858a_47b_33'
+def buildNumber = env.BUILD_NUMBER
+// Values on tag containing the remoting version and build number
+if (env.TAG_NAME) {
+    def tagItems = env.TAG_NAME.split('-')
+    if (tagItems.length == 2) {
+        tagWithOneDashExist = true
+        remotingVersion = tagItems[0]
+        buildNumber = tagItems[1]
+    }
+}
+
 // Specify parallel stages
 // Linux: bake group(s) or target(s)
 // Windows: flavor and version to build
@@ -54,6 +68,9 @@ def parallelStages = [failFast: false]
         // Only bake targets can be specified with build-%, test-% and publish-% make targets
         def makeTargetSuffix= (imageType.startsWith('agent_') || imageType.startsWith('inbound-agent_')) ? "-${imageType}" : ''
         withEnv([
+            "ON_TAG=${tagWithOneDashExist}",
+            "REMOTING_VERSION=${remotingVersion}",
+            "BUILD_NUMBER=${buildNumber}",
             "IMAGE_TYPE=${imageType}",
             "REGISTRY_ORG=${infra.isTrusted() ? 'jenkins' : 'jenkins4eval'}",
             "MAKE_TARGET_SUFFIX=${makeTargetSuffix}"
@@ -120,25 +137,18 @@ def parallelStages = [failFast: false]
                         // trusted.ci.jenkins.io builds (e.g. publication to DockerHub)
                         if (infra.isTrusted()) {
                             stage('Deploy to DockerHub') {
-                                String[] tagItems = env.TAG_NAME.split('-')
-                                if(tagItems.length != 2) {
+                                if (!tagWithOneDashExist) {
                                     error("The deployment to Docker Hub failed because the tag doesn't contain any '-'.")
                                 }
-                                withEnv([
-                                    "ON_TAG=true",
-                                    "REMOTING_VERSION=${tagItems[0]}",
-                                    "BUILD_NUMBER=${tagItems[1]}",
-                                ]) {
-                                    // This function is defined in the jenkins-infra/pipeline-library
-                                    infra.withDockerCredentials {
-                                        if (isUnix()) {
-                                            sh 'make "publish${MAKE_TARGET_SUFFIX}"'
-                                        } else {
-                                            powershell './make.ps1 publish'
-                                        }
+                                // This function is defined in the jenkins-infra/pipeline-library
+                                infra.withDockerCredentials {
+                                    if (isUnix()) {
+                                        sh 'make "publish${MAKE_TARGET_SUFFIX}"'
+                                    } else {
+                                        powershell './make.ps1 publish'
                                     }
-                                    archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
                                 }
+                                archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
                             }
                         }
                     }
