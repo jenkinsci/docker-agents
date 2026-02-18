@@ -67,7 +67,7 @@ variable "DEBIAN_RELEASE" {
 }
 
 variable "UBI9_TAG" {
-  default = "9.7-1770238273"
+  default = "9.7-1771346757"
 }
 
 # Set this value to a specific Windows version to override Windows versions to build returned by windowsversions function
@@ -251,7 +251,7 @@ function "windowsversions" {
   params = [flavor]
   result = (notequal(WINDOWS_VERSION_OVERRIDE, "")
     ? [WINDOWS_VERSION_OVERRIDE]
-    : ["ltsc2019", "ltsc2022"])
+  : ["ltsc2019", "ltsc2022"])
 }
 
 # Return array of agent type(s) to build
