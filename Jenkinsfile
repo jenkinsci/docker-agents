@@ -85,65 +85,65 @@ def parallelStages = [failFast: false]
                 node(resolvedAgentLabel) {
                     timeout(time: 60, unit: 'MINUTES') {
                         checkout scm
-                        stage("Prepare Docker on ${resolvedAgentLabel}") {
-                            if (isUnix()) {
-                                sh 'make docker-init'
-                            } else {
-                                powershell './make.ps1 docker-init'
-                                archiveArtifacts artifacts: 'build-windows_*.yaml', allowEmptyArchive: true
-                            }
-                        }
-
-                        if (isUnix()) {
-                            stage('Checks') {
-                                sh 'make hadolint'
-                                sh 'make shellcheck'
-                            }
-                        }
-
-                        // No single arch build or test on trusted.ci.jenkins.io
-                        if (!infra.isTrusted()) {
-                            // Build current arch for Linux images
-                            stage('Build current arch') {
+                        // This function is defined in the jenkins-infra/pipeline-library
+                        infra.withDockerCredentials {
+                            stage("Prepare Docker on ${resolvedAgentLabel}") {
                                 if (isUnix()) {
-                                    sh 'make "build${MAKE_TARGET_SUFFIX}"'
+                                    sh 'make docker-init'
                                 } else {
-                                    // No multiarch Windows images
+                                    powershell './make.ps1 docker-init'
+                                    archiveArtifacts artifacts: 'build-windows_*.yaml', allowEmptyArchive: true
+                                }
+                            }
+
+                            if (isUnix()) {
+                                stage('Checks') {
+                                    sh 'make hadolint'
+                                    sh 'make shellcheck'
+                                }
+                            }
+
+                            // No single arch build or test on trusted.ci.jenkins.io
+                            if (!infra.isTrusted()) {
+                                // Build current arch for Linux images
+                                stage('Build current arch') {
+                                    if (isUnix()) {
+                                        sh 'make "build${MAKE_TARGET_SUFFIX}"'
+                                    } else {
+                                        // No multiarch Windows images
+                                        powershell './make.ps1 build'
+                                    }
+                                }
+
+                                stage('Test') {
+                                    if (isUnix()) {
+                                        sh 'make "test${MAKE_TARGET_SUFFIX}"'
+                                    } else {
+                                        powershell './make.ps1 test'
+                                    }
+                                    junit(allowEmptyResults: true, keepLongStdio: true, testResults: 'target/**/junit-results*.xml')
+                                }
+                                archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
+                            }
+
+                            // If the tests are passing for Linux AMD64 or if we're on trusted.ci.jenkins.io
+                            // then we build all the CPU architectures
+                            stage('Build multiarch') {
+                                if (isUnix()) {
+                                    sh 'make "multiarchbuild${MAKE_TARGET_SUFFIX}"'
+                                } else {
+                                    // No multiarch images for Windows, (re)building them here on both controllers
                                     powershell './make.ps1 build'
                                 }
+                                archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
                             }
 
-                            stage('Test') {
-                                if (isUnix()) {
-                                    sh 'make "test${MAKE_TARGET_SUFFIX}"'
-                                } else {
-                                    powershell './make.ps1 test'
-                                }
-                                junit(allowEmptyResults: true, keepLongStdio: true, testResults: 'target/**/junit-results*.xml')
-                            }
-                            archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
-                        }
-
-                        // If the tests are passing for Linux AMD64 or if we're on trusted.ci.jenkins.io
-                        // then we build all the CPU architectures
-                        stage('Build multiarch') {
-                            if (isUnix()) {
-                                sh 'make "multiarchbuild${MAKE_TARGET_SUFFIX}"'
-                            } else {
-                                // No multiarch images for Windows, (re)building them here on both controllers
-                                powershell './make.ps1 build'
-                            }
-                            archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
-                        }
-
-                        // trusted.ci.jenkins.io builds (e.g. publication to DockerHub)
-                        if (infra.isTrusted()) {
-                            stage('Deploy to DockerHub') {
-                                if (!tagWithOneDashExist) {
-                                    error("The deployment to Docker Hub failed because the tag doesn't contain any '-'.")
-                                }
-                                // This function is defined in the jenkins-infra/pipeline-library
-                                infra.withDockerCredentials {
+                            // trusted.ci.jenkins.io builds (e.g. publication to DockerHub)
+                            if (infra.isTrusted()) {
+                                stage('Deploy to DockerHub') {
+                                    if (!tagWithOneDashExist) {
+                                        error("The deployment to Docker Hub failed because the tag doesn't contain any '-'.")
+                                    }
                                     if (isUnix()) {
                                         if (imageType != 'linux') {
                                             sh 'make "publish${MAKE_TARGET_SUFFIX}"'
@@ -154,8 +154,8 @@ def parallelStages = [failFast: false]
                                     } else {
                                         powershell './make.ps1 publish'
                                     }
+                                    archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
                                 }
-                                archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
                             }
                         }
                     }
