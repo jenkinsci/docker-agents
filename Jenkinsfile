@@ -1,3 +1,5 @@
+@Library('pipeline-library@pull/993/head') _
+
 final String cronExpr = env.BRANCH_IS_PRIMARY ? '@daily' : ''
 
 properties([
