@@ -46,6 +46,7 @@ conditions:
         - linux/aarch64
         - linux/ppc64le
         - linux/s390x
+        - linux/riscv64
         - windows/x64
 
 targets:

@@ -47,6 +47,7 @@ conditions:
         - linux/s390x
         - windows/x64
         - linux/arm
+        - linux/riscv64
 
 targets:
   setJDK17VersionDockerBake:
