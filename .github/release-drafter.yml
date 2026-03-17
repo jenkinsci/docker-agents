@@ -1,5 +1,5 @@
-# https://github.com/jenkinsci/.github/blob/master/.github/release-drafter.adoc
-_extends: .github
+# https://github.com/jenkins-infra/.github/blob/master/.github/release-drafter.yml
+_extends: github:jenkins-infra/.github:/.github/release-drafter.yml
 
 name-template: 'next'
 tag-template: 'next'
