@@ -167,6 +167,10 @@ ifneq (,$(BATS_FLAGS))
 test-%: bats_flags += $(BATS_FLAGS)
 endif
 test-%: prepare-test
+# Check that the image exists in the manifest
+	$(call check_image,$*)
+# Ensure that the image is built
+	@set -x; make --silent build-$*
 	@set -x; make --silent _test-dispatch TARGET=$*
 
 # Dispatch the test depending if it's a bake target or a group
@@ -184,10 +188,6 @@ _test-group:
 # Test an image
 _test-image:
 	@echo "Testing $(TARGET)"
-# Check that the image exists in the manifest
-	$(call check_image,$(TARGET))
-# Ensure that the image is built
-	@set -x; make --silent build-$(TARGET)
 # Show bats version
 	@set -x; bats/bin/bats --version
 # Each type of image ("agent" or "inbound-agent") has its own tests suite
@@ -199,6 +199,6 @@ else
 	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --timing
 endif
 
-# Test all targets depending on the current architecture
+# Test all targets depending on the current OS and architecture
 test:
-	@set -x; make --silent list | while read image; do make --silent "test-$${image}"; done
+	@set -x; make --silent test-$(OS)
