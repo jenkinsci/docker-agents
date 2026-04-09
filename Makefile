@@ -31,7 +31,7 @@ export ARCH ?= $(shell \
 ## Check the presence of a CLI in the current PATH
 check_cli = type "$(1)" >/dev/null 2>&1 || { echo "Error: command '$(1)' required but not found. Exiting." ; exit 1 ; }
 ## Check if a given image or group exists in the current manifest docker-bake.hcl
-check_image = make --silent list listgroup-all  | grep -w '$(1)' >/dev/null 2>&1 || { echo "Error: the image '$(1)' does not exist in manifest for the current platform '$(OS)/$(ARCH)'. Please check the output of 'make list'. Exiting." ; exit 1 ; }
+check_image = make --silent list listgroup-all | grep -w '$(1)' >/dev/null 2>&1 || { echo "Error: the image or group '$(1)' does not exist in manifest for the current platform '$(OS)/$(ARCH)'. Please check the output of 'make list' or 'make listgroup-all'. Exiting." ; exit 1 ; }
 ## Base "docker buildx base" command to be reused everywhere
 bake_base_cli := docker buildx bake --file docker-bake.hcl
 ## Command to be used on build (only)
@@ -169,7 +169,7 @@ endif
 test-%: prepare-test
 	@set -x; make --silent _test-dispatch TARGET=$*
 
-# Dispatch the test depending if the make target is a bake target or a group
+# Dispatch the test depending if it's a bake target or a group
 _test-dispatch:
 	@set -x; if make --silent listgroup-linux | grep -w "$(TARGET)" >/dev/null 2>&1; then \
 		make --silent _test-group TARGET=$(TARGET); \
@@ -177,10 +177,11 @@ _test-dispatch:
 		make --silent _test-image TARGET=$(TARGET); \
 	fi
 
-
+# Test a group by iterating on its targets
 _test-group:
 	@set -x; make --silent list-$(TARGET) | while read image; do make --silent test-$$image; done
 
+# Test an image
 _test-image:
 	@echo "Testing $(TARGET)"
 # Check that the image exists in the manifest
