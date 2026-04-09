@@ -54,11 +54,13 @@ if (env.TAG_NAME) {
 }
 
 // Specify parallel stages
-// Linux: bake group(s) or target(s)
+// Linux: bake group(s) or target(s), see 'make list' or 'make listgroup-linux' output
 // Windows: flavor and version to build
 def parallelStages = [failFast: false]
 [
-    'linux',
+    'alpine',
+    'debian',
+    'rhel_ubi9',
     'nanoserver-ltsc2019',
     'nanoserver-ltsc2022',
     'windowsservercore-ltsc2019',

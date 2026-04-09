@@ -30,8 +30,8 @@ export ARCH ?= $(shell \
 ##### Macros
 ## Check the presence of a CLI in the current PATH
 check_cli = type "$(1)" >/dev/null 2>&1 || { echo "Error: command '$(1)' required but not found. Exiting." ; exit 1 ; }
-## Check if a given image exists in the current manifest docker-bake.hcl
-check_image = make --silent list | grep -w '$(1)' >/dev/null 2>&1 || { echo "Error: the image '$(1)' does not exist in manifest for the current platform '$(OS)/$(ARCH)'. Please check the output of 'make list'. Exiting." ; exit 1 ; }
+## Check if a given image or linux distribution exists in the current manifest docker-bake.hcl
+check_image = make --silent list listgroup-linux  | grep -w '$(1)' >/dev/null 2>&1 || { echo "Error: the image '$(1)' does not exist in manifest for the current platform '$(OS)/$(ARCH)'. Please check the output of 'make list'. Exiting." ; exit 1 ; }
 ## Base "docker buildx base" command to be reused everywhere
 bake_base_cli := docker buildx bake --file docker-bake.hcl
 ## Command to be used on build (only)
@@ -40,7 +40,7 @@ bake_cli := $(bake_base_cli) --load
 bake_default_target := all
 
 .PHONY: build
-.PHONY: test test-alpine test-debian
+.PHONY: test
 
 check-reqs:
 ## Build requirements
@@ -167,21 +167,37 @@ ifneq (,$(BATS_FLAGS))
 test-%: bats_flags += $(BATS_FLAGS)
 endif
 test-%: prepare-test
+	@set -x; make --silent _test-dispatch TARGET=$*
+
+# Dispatch the test depending if the make target is a bake target or a group
+_test-dispatch:
+	@set -x; if make --silent listgroup-linux | grep -w "$(TARGET)" >/dev/null 2>&1; then \
+		make --silent _test-group TARGET=$(TARGET); \
+	else \
+		make --silent _test-image TARGET=$(TARGET); \
+	fi
+
+
+_test-group:
+	@set -x; make --silent list-$(TARGET) | while read image; do make --silent test-$$image; done
+
+_test-image:
+	@echo "Testing $(TARGET)"
 # Check that the image exists in the manifest
-	@$(call check_image,$*)
+	$(call check_image,$(TARGET))
 # Ensure that the image is built
-	@set -x; make --silent build-$*
+	@set -x; make --silent build-$(TARGET)
 # Show bats version
 	@set -x; bats/bin/bats --version
 # Each type of image ("agent" or "inbound-agent") has its own tests suite
 ifeq ($(CI), true)
 # Execute the test harness and write result to a TAP file
-	IMAGE=$* bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $* |  cut -d "_" -f 1).bats $(bats_flags) --formatter junit | tee target/junit-results-$*.xml
+	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --formatter junit | tee target/junit-results-$(TARGET).xml
 else
 # Execute the test harness
-	IMAGE=$* bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $* |  cut -d "_" -f 1).bats $(bats_flags) --timing
+	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --timing
 endif
 
-# Test targets depending on the current architecture
+# Test all targets depending on the current architecture
 test:
 	@set -x; make --silent list | while read image; do make --silent "test-$${image}"; done
