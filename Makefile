@@ -168,7 +168,7 @@ test-%: bats_flags += $(BATS_FLAGS)
 endif
 test-%: prepare-test
 # Check that the image exists in the manifest
-	$(call check_image,$*)
+	@$(call check_image,$*)
 # Ensure that the image is built
 	@set -x; make --silent build-$*
 	@set -x; make --silent _test-dispatch TARGET=$*
