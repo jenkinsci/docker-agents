@@ -55,12 +55,18 @@ if (env.TAG_NAME) {
 
 // Specify parallel stages
 // Linux: bake group(s) or target(s), see 'make list' or 'make listgroup-linux' output
+// Note: splitting Debian targets to avoid 429 rate limit errors from Docker Hub
 // Windows: flavor and version to build
 def parallelStages = [failFast: false]
 [
     'alpine',
-    'debian',
     'rhel_ubi9',
+    'agent_debian_jdk17',
+    'agent_debian_jdk21',
+    'agent_debian_jdk25',
+    'inbound-agent_debian_jdk17',
+    'inbound-agent_debian_jdk21',
+    'inbound-agent_debian_jdk25',
     'nanoserver-ltsc2019',
     'nanoserver-ltsc2022',
     'windowsservercore-ltsc2019',
