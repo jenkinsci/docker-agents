@@ -34,38 +34,16 @@ conditions:
       command: curl --silent --show-error --location --verbose --output /dev/null --fail https://repo.jenkins-ci.org/public/org/jenkins-ci/main/remoting/{{ source "lastVersion" }}/remoting-{{ source "lastVersion" }}.jar
 
 targets:
-  setAlpineDockerImage:
-    name: Bump the Jenkins remoting version on Alpine
+  updateDockerfiles:
+    name: Bump the Jenkins remoting version in all Dockerfiles
     kind: dockerfile
     spec:
-      file: alpine/Dockerfile
-      instruction:
-        keyword: ARG
-        matcher: VERSION
-    scmid: default
-  setDebianDockerImage:
-    name: Bump the Jenkins remoting version on Debian Bullseye
-    kind: dockerfile
-    spec:
-      file: debian/Dockerfile
-      instruction:
-        keyword: ARG
-        matcher: VERSION
-    scmid: default
-  setNanoserverDockerImage:
-    name: Bump the Jenkins remoting version on Windows Nanoserver
-    kind: dockerfile
-    spec:
-      file: windows/nanoserver/Dockerfile
-      instruction:
-        keyword: ARG
-        matcher: VERSION
-    scmid: default
-  setWindowsServerCoreDockerImage:
-    name: Bump the Jenkins remoting version on Windows Server Core
-    kind: dockerfile
-    spec:
-      file: windows/windowsservercore/Dockerfile
+      files:
+        - alpine/Dockerfile
+        - debian/Dockerfile
+        - debian/Dockerfile
+        - windows/nanoserver/Dockerfile
+        - windows/windowsservercore/Dockerfile
       instruction:
         keyword: ARG
         matcher: VERSION
@@ -97,15 +75,26 @@ targets:
       replacepattern: >-
         $$RemotingVersion${1}= '{{ source "lastVersion" }}',
     scmid: default
+  updateJenkinsfileRemotingVersion:
+    name: "Update the remoting version in Jenkinsfile"
+    kind: file
+    spec:
+      file: Jenkinsfile
+      matchpattern: >-
+        def remotingVersion = '(.*)'
+      replacepattern: >-
+        def remotingVersion = '{{ source "lastVersion" }}'
+    scmid: default
   updateReadmeRemotingVersion:
-      name: "Update the remoting version in the README.md file"
-      kind: file
-      spec:
-        file: README.md
-        matchpattern: >-
-          (.*)"VERSION":\s"(.*)"(.*)
-        replacepattern: '$1"VERSION": "{{ source "lastVersion" }}"$3'
-      scmid: default
+    name: "Update the remoting version in the README.md file"
+    kind: file
+    spec:
+      file: README.md
+    matchpattern: >-
+      \$RemotingVersion(.*)=(.*),
+    replacepattern: >-
+      $$RemotingVersion${1}= '{{ source "lastVersion" }}',
+    scmid: default
 
 actions:
   default:
