@@ -10,14 +10,32 @@ ARG TARGETPLATFORM
 COPY adoptium-get-jdk-link.sh /usr/bin/local/adoptium-get-jdk-link.sh
 COPY adoptium-install-jdk.sh /usr/bin/local/adoptium-install-jdk.sh
 
+# TODO: remove jq along with the adoptium shell script in favor of direct JDK archive URL maintained by updatecli/renovabot
+COPY ./gpg-keys/jq-keyring.kbx /tmp/gpg-keys/jq-keyring.kbx
+ARG JQ_VERSION=1.8.2
+
 ARG JAVA_VERSION=17.0.19_10
 
 # hadolint ignore=DL3041
 RUN dnf install --disableplugin=subscription-manager --setopt=install_weak_deps=0 --setopt=tsflags=nodocs --allowerasing -y \
     ca-certificates \
     curl \
-    jq \
     && dnf clean --disableplugin=subscription-manager all \
+    && keyring_file="/tmp/gpg-keys/jq-keyring.kbx" \
+    && jq_temp_download_dir="$(mktemp -d)" \
+    && arch=$(uname -m | sed -e 's/x86_64/amd64/g' -e 's/aarch64/arm64/g') \
+    # Relative paths (assuming we're working from inside the temp dir)
+    && jq_binary_file="jq-linux-${arch}" \
+    && jq_sig_file="${jq_binary_file}.asc" \
+    && pushd "${jq_temp_download_dir}" \
+    && curl --fail --silent --show-error --location --output "${jq_binary_file}" \
+      "https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/${jq_binary_file}" \
+    # The detached signature is published in the jq repository's sig/ tree (not as a release asset)
+    && curl --fail --silent --show-error --location --output "${jq_sig_file}" \
+      "https://raw.githubusercontent.com/jqlang/jq/master/sig/v${JQ_VERSION}/${jq_sig_file}" \
+    && gpgv --keyring="${keyring_file}" "${jq_sig_file}" "${jq_binary_file}" \
+    && cp "${jq_binary_file}" /usr/local/bin/jq \
+    && chmod a+x /usr/local/bin/jq \
     && /usr/bin/local/adoptium-install-jdk.sh
 
 ENV PATH="/opt/jdk-${JAVA_VERSION}/bin:${PATH}"
