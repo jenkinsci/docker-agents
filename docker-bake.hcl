@@ -67,7 +67,7 @@ variable "DEBIAN_RELEASE" {
 }
 
 variable "UBI9_TAG" {
-  default = "9.8-1784720169"
+  default = "9.8-1785214350"
 }
 
 # Set this value to a specific Windows version to override Windows versions to build returned by windowsversions function
@@ -157,7 +157,7 @@ target "nanoserver" {
     TOOLS_WINDOWS_VERSION = "${toolsversion(windows_version)}"
     VERSION               = REMOTING_VERSION
     WINDOWS_VERSION_TAG   = windows_version
-    JAVA_ZIP_URL = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
+    JAVA_ZIP_URL          = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
   }
   target    = type
   tags      = windows_tags(type, jdk, "nanoserver-${windows_version}")
@@ -178,7 +178,7 @@ target "windowsservercore" {
     TOOLS_WINDOWS_VERSION = "${toolsversion(windows_version)}"
     VERSION               = REMOTING_VERSION
     WINDOWS_VERSION_TAG   = windows_version
-    JAVA_ZIP_URL = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
+    JAVA_ZIP_URL          = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
   }
   target    = type
   tags      = windows_tags(type, jdk, "windowsservercore-${windows_version}")
