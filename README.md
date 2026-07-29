@@ -222,7 +222,6 @@ $ make show
       "dockerfile": "alpine/Dockerfile",
       "args": {
         "ALPINE_TAG": "3.24.1",
-        "JAVA_VERSION": "25.0.3_10",
         "VERSION": "3384.v60d89463d9e0"
       },
       "tags": [

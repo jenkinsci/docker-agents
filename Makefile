@@ -77,13 +77,12 @@ shellcheck:
 
 # Build all targets with the current OS and architecture
 build: check-reqs target showarch-$(ARCH)
-	@set -x; $(bake_cli) --metadata-file=target/build-result-metadata_$(bake_default_target).json --set '*.platform=$(OS)/$(ARCH)' $(shell $(MAKE) --silent list)
+	@set -x; export PLATFORM_OVERRIDE=$(OS)/$(ARCH); $(bake_cli) --metadata-file=target/build-result-metadata_$(bake_default_target).json $(shell $(MAKE) --silent list)
 
 # Build a specific target with the current OS and architecture
-build-%: check-reqs target show-%
-	@$(call check_image,$*)
+build-%: check-reqs target
 	@echo "== building $*"
-	@set -x; $(bake_cli) --metadata-file=target/build-result-metadata_$*.json --set '*.platform=$(OS)/$(ARCH)' '$*'
+	@set -x; export PLATFORM_OVERRIDE=$(OS)/$(ARCH); $(bake_cli) --metadata-file=target/build-result-metadata_$*.json '${*}*'
 
 # Build default bake group corresponding to the current OS but independently of the architecture
 multiarchbuild: check-reqs show-$(OS)
@@ -99,11 +98,11 @@ show:
 
 # Show a specific target
 show-%:
-	@set -x; $(bake_base_cli) --progress=quiet --print $* | jq
+	@set -x; $(bake_base_cli) --progress=quiet --print $*"*" | jq
 
 # Show all targets depending on the architecture
 showarch-%:
-	@set -x; $(MAKE) --silent show | jq --arg arch "$(OS)/$*" '.target |= with_entries(select(.value.platforms | index($$arch)))'
+	@set -x; $(MAKE) --silent show | jq '.target | with_entries( select(.key | match("$*") ) )'
 
 # List tags of all default targets
 tags:
@@ -193,8 +192,7 @@ _test-image:
 # Each type of image ("agent" or "inbound-agent") has its own tests suite
 ifeq ($(CI), true)
 # Execute the test harness and write result to a TAP file
-	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --report-formatter junit --output target/ | tee target/junit-results-$(TARGET).xml
-	mv target/report.xml target/junit-results-$(TARGET).xml
+	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --report-formatter junit --output target/junit/
 else
 # Execute the test harness
 	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --timing

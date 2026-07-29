@@ -28,18 +28,22 @@ SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 # Ref. https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
 ARG TARGETPLATFORM
 
-COPY adoptium-get-jdk-link.sh /usr/bin/local/adoptium-get-jdk-link.sh
-COPY adoptium-install-jdk.sh /usr/bin/local/adoptium-install-jdk.sh
-
-ARG JAVA_VERSION
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
     ca-certificates \
-    jq \
     curl \
-  && /usr/bin/local/adoptium-install-jdk.sh alpine
+    tar
 
-ENV PATH="/opt/jdk-${JAVA_VERSION}/bin:${PATH}"
+ARG JAVA_ZIP_URL="Provided by docker-bake.hcl"
+ARG temp_Java_Home="/opt/jdktemp"
+ENV PATH="${temp_Java_Home}/bin:${PATH}"
+RUN mkdir -p "${temp_Java_Home}" \
+  && jdkArchive="/opt/jdk.zip" \
+  && curl --silent --show-error --location --output "${jdkArchive}" "${JAVA_ZIP_URL}" \
+  # TODO: Verify download with GPG
+  && tar xzf "${jdkArchive}" --strip-components=1 -C "${temp_Java_Home}" \
+  && java --version \
+  && jlink --version
 
 # TODO: extract this to a common script instead of ignoring SC2086
 # hadolint ignore=SC2086
@@ -49,7 +53,7 @@ RUN java_major_version="$(jlink --version 2>&1 | cut -c1-2)"; \
     # because jlink fails with the error "jmods: Value too large for defined data type" error.
     # For JDK25, we need to have a proper test and validation process first cf https://github.com/jenkinsci/docker-agents/issues/1124)
     # Noting there isn't any JMODs shipped anymore since https://adoptium.net/en-GB/news/2025/08/eclipse-temurin-jdk24-JEP493-enabled
-    cp -r "/opt/jdk-${JAVA_VERSION}" /javaruntime; \
+    mv "${temp_Java_Home}" /javaruntime; \
   else \
     case "$(jlink --version 2>&1 | cut -c1-2)" in \
       "21") options="--compress=zip-6 --add-modules ALL-MODULE-PATH" ;; \

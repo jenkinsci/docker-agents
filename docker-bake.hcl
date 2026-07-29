@@ -14,14 +14,6 @@ variable "jdks_in_preview" {
   default = []
 }
 
-variable "JAVA21_VERSION" {
-  default = "21.0.11_10"
-}
-
-variable "JAVA25_VERSION" {
-  default = "25.0.3_9"
-}
-
 variable "REMOTING_VERSION" {
   default = "3384.v60d89463d9e0"
 }
@@ -76,11 +68,14 @@ variable "WINDOWS_AGENT_TYPE_OVERRIDE" {
   default = ""
 }
 
-variable "jdk_versions" {
-  default = {
-    21 = JAVA21_VERSION
-    25 = JAVA25_VERSION
-  }
+variable "PLATFORM_OVERRIDE" {
+  default=""
+}
+
+function "list" {
+  params = []
+  variadic_params = items
+  result = items
 }
 
 ## Targets
@@ -88,54 +83,57 @@ target "alpine" {
   matrix = {
     type = agent_types_to_build
     jdk  = jdks_to_build
+    platform = notequal("",PLATFORM_OVERRIDE) ? list(PLATFORM_OVERRIDE) : ["linux/amd64", "linux/arm64"]
   }
-  name       = "${type}_alpine_jdk${jdk}"
+  name       = "${type}_alpine_jdk${jdk}_${trimprefix(platform, "linux/")}"
   target     = type
   dockerfile = "alpine/Dockerfile"
   context    = "."
   args = {
     ALPINE_TAG   = ALPINE_FULL_TAG
     VERSION      = REMOTING_VERSION
-    JAVA_VERSION = "${javaversion(jdk)}"
+    JAVA_ZIP_URL   = get_java_archive_url("linux-musl", trimprefix(platform, "linux/"), jdk)
   }
   tags      = concat(linux_tags(type, jdk, "alpine"), linux_tags(type, jdk, "alpine${ALPINE_SHORT_TAG}"))
-  platforms = ["linux/amd64", "linux/arm64"]
+  platform  = platform
 }
 
 target "debian" {
   matrix = {
     type = agent_types_to_build
     jdk  = jdks_to_build
+    platform = notequal("",PLATFORM_OVERRIDE) ? list(PLATFORM_OVERRIDE) : ["linux/amd64", "linux/arm64", "linux/ppc64le", "linux/s390x", "linux/riscv64"]
   }
-  name       = "${type}_debian_jdk${jdk}"
+  name       = "${type}_debian_jdk${jdk}_${trimprefix(platform, "linux/")}"
   target     = type
   dockerfile = "debian/Dockerfile"
   context    = "."
   args = {
     VERSION        = REMOTING_VERSION
     DEBIAN_RELEASE = DEBIAN_RELEASE
-    JAVA_VERSION   = "${javaversion(jdk)}"
+    JAVA_ZIP_URL   = get_java_archive_url("linux-glibc", trimprefix(platform, "linux/"), jdk)
   }
   tags      = linux_tags(type, jdk, "debian")
-  platforms = ["linux/amd64", "linux/arm64", "linux/ppc64le", "linux/s390x", "linux/riscv64"]
+  platform  = platform
 }
 
 target "rhel_ubi9" {
   matrix = {
     type = agent_types_to_build
     jdk  = jdks_to_build
+    platform = notequal("",PLATFORM_OVERRIDE) ? list(PLATFORM_OVERRIDE) : ["linux/amd64", "linux/arm64", "linux/ppc64le"]
   }
-  name       = "${type}_rhel_ubi9_jdk${jdk}"
+  name       = "${type}_rhel_ubi9_jdk${jdk}_${trimprefix(platform, "linux/")}"
   target     = type
   dockerfile = "rhel/ubi9/Dockerfile"
   context    = "."
   args = {
     UBI9_TAG     = UBI9_TAG
     VERSION      = REMOTING_VERSION
-    JAVA_VERSION = "${javaversion(jdk)}"
+    JAVA_ZIP_URL   = get_java_archive_url("linux-glibc", trimprefix(platform, "linux/"), jdk)
   }
   tags      = linux_tags(type, jdk, "rhel-ubi9")
-  platforms = rhel_ubi9_platforms(jdk)
+  platform  = rhel_ubi9_platforms(jdk)
 }
 
 target "nanoserver" {
@@ -143,8 +141,9 @@ target "nanoserver" {
     type            = windowsagenttypes(WINDOWS_AGENT_TYPE_OVERRIDE)
     jdk             = jdks_to_build
     windows_version = windowsversions("nanoserver")
+    platform        = ["windows/amd64"]
   }
-  name       = "${type}_nanoserver-${windows_version}_jdk${jdk}"
+  name       = "${type}_nanoserver-${windows_version}_jdk${jdk}_${trimprefix(platform, "windows/")}"
   dockerfile = "windows/nanoserver/Dockerfile"
   context    = "."
   args = {
@@ -152,11 +151,11 @@ target "nanoserver" {
     TOOLS_WINDOWS_VERSION = "${toolsversion(windows_version)}"
     VERSION               = REMOTING_VERSION
     WINDOWS_VERSION_TAG   = windows_version
-    JAVA_ZIP_URL          = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
+    JAVA_ZIP_URL          = get_java_archive_url("windows", trimprefix(platform, "windows/"), jdk)
   }
   target    = type
   tags      = windows_tags(type, jdk, "nanoserver-${windows_version}")
-  platforms = ["windows/amd64"]
+  platform  = platform
 }
 
 target "windowsservercore" {
@@ -164,8 +163,9 @@ target "windowsservercore" {
     type            = windowsagenttypes(WINDOWS_AGENT_TYPE_OVERRIDE)
     jdk             = jdks_to_build
     windows_version = windowsversions("windowsservercore")
+    platform        = ["windows/amd64"]
   }
-  name       = "${type}_windowsservercore-${windows_version}_jdk${jdk}"
+  name       = "${type}_windowsservercore-${windows_version}_jdk${jdk}_${trimprefix(platform, "windows/")}"
   dockerfile = "windows/windowsservercore/Dockerfile"
   context    = "."
   args = {
@@ -173,11 +173,11 @@ target "windowsservercore" {
     TOOLS_WINDOWS_VERSION = "${toolsversion(windows_version)}"
     VERSION               = REMOTING_VERSION
     WINDOWS_VERSION_TAG   = windows_version
-    JAVA_ZIP_URL          = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
+    JAVA_ZIP_URL          = get_java_archive_url("windows", trimprefix(platform, "windows/"), jdk)
   }
   target    = type
   tags      = windows_tags(type, jdk, "windowsservercore-${windows_version}")
-  platforms = ["windows/amd64"]
+  platform  = platform
 }
 
 ## Groups
@@ -216,13 +216,6 @@ function "is_default_jdk" {
   result = equal(default_jdk, jdk) ? true : false
 }
 
-# Return the complete Java version corresponding to the jdk passed as parameter
-function "javaversion" {
-  params = [jdk]
-  result = lookup(jdk_versions, jdk, "Unsupported JDK version")
-}
-
-## Specific functions
 # Return array of Windows version(s) to build
 # Can be overriden by setting WINDOWS_VERSION_OVERRIDE to a specific Windows version
 # Ex: WINDOWS_VERSION_OVERRIDE=ltsc2025 docker buildx bake windows
@@ -249,12 +242,6 @@ function "toolsversion" {
   result = (equal("ltsc2019", version)
     ? "1809"
   : version)
-}
-
-# Return an array of RHEL UBI 9 platforms to use depending on the jdk passed as parameter
-function "rhel_ubi9_platforms" {
-  params = [jdk]
-  result = ["linux/amd64", "linux/arm64", "linux/ppc64le"]
 }
 
 # Return the distribution followed by a dash if it is not the default distribution
@@ -326,4 +313,10 @@ function "windows_tags" {
     equal(ON_TAG, "true") ? (is_default_jdk(jdk) ? "${REGISTRY}/${orgrepo(type)}:${flavor_and_version}" : "") : "",
     "${REGISTRY}/${orgrepo(type)}:jdk${preview_tag(jdk)}-${flavor_and_version}",
   ]
+}
+
+# Returns the Adoptium JDK download URL for the specified platform (OS type, CPU and JDK release line)
+function "get_java_archive_url" {
+  params = [os_type, cpu, jdk]
+  result = lookup(jdk_installer_urls[os_type][cpu], jdk, "Installer URL not found")
 }
