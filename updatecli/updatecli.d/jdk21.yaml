@@ -1,5 +1,8 @@
+{{ $platforms := list "windows/x64" "alpine-linux/x64" "alpine-linux/aarch64" "linux/x64" "linux/aarch64" "linux/ppc64le" "linux/s390x" "linux/riscv64" }}
+# TODO: templatize into a single "jdks.yaml" and iterate over JDK values when https://github.com/updatecli/updatecli/issues/9821 is fixed
+{{ $jdkRelease := 21 }}
 ---
-name: Bump JDK21 version for all Linux images
+name: Bump JDK{{ $jdkRelease }} version for all Linux images
 
 scms:
   default:
@@ -14,70 +17,56 @@ scms:
       branch: "{{ .github.branch }}"
 
 sources:
-  latestJDK21Version:
+  latestJDKVersion:
     kind: temurin
-    name: Get the latest Adoptium JDK21 version via the API
+    name: Get the latest Adoptium JDK{{ $jdkRelease }} version via the API
     spec:
-      featureversion: 21
+      featureversion: {{ $jdkRelease }}
     transformers:
       - trimprefix: "jdk-"
-  windows_x64_installer_url:
-    name: Retrieve the latest Installer URL (ZIP) for Windows x64
+  {{- range $platform := $platforms }}
+    {{- $adoptiumOS := index (splitList "/" $platform) 0 }}
+    {{- $adoptiumCPU := index (splitList "/" $platform) 1 }}
+  get_{{ $adoptiumOS }}_{{ $adoptiumCPU }}_installer_url:
+    name: Retrieve the latest JDK {{ $jdkRelease }} Installer URL for {{ $adoptiumOS | title }} ({{ $adoptiumCPU }})
     kind: temurin
+    dependson:
+      - latestJDKVersion
     spec:
-      architecture: x64
-      featureversion: 21
-      operatingsystem: windows
+      architecture: {{ $adoptiumCPU }}
+      operatingsystem: {{ $adoptiumOS }}
+      specificversion: '{{ source "latestJDKVersion" }}'
       releasetype: ga
       result: installer_url
-
-# Architectures must match those of the targets in docker-bake.hcl
-conditions:
-  checkTemurinAllReleases:
-    name: Check if the "<latestJDK21Version>" is available for all platforms
-    kind: temurin
-    sourceid: latestJDK21Version
-    spec:
-      featureversion: 21
-      platforms:
-        - alpine-linux/x64
-        - alpine-linux/aarch64
-        - linux/x64
-        - linux/aarch64
-        - linux/ppc64le
-        - linux/s390x
-        - linux/riscv64
-        - windows/x64
+  {{- end }}
 
 targets:
-  setJDK21VersionDockerBake:
-    name: "Bump JDK21 version for Linux images in the docker-bake.hcl file"
-    sourceid: latestJDK21Version
-    kind: hcl
+  {{- range $platform := $platforms }}
+    {{- $adoptiumOS := index (splitList "/" $platform) 0 }}
+    {{- $adoptiumCPU := index (splitList "/" $platform) 1 }}
+    {{- $dockerCPU := ( eq $adoptiumCPU "x64" | ternary "amd64" ( eq $adoptiumCPU "aarch64" | ternary "arm64" $adoptiumCPU )) }}
+    {{- $prefix := "windows/amd64" }}
+    {{- if ne $adoptiumOS "windows" }}
+      {{- $prefix = printf "jdk%d/linux/%s/%s" $jdkRelease $dockerCPU (eq $adoptiumOS "alpine-linux" | ternary "musl" "glibc" )}}
+    {{- end }}
+  set_{{ $adoptiumOS }}_{{ $adoptiumCPU }}:
+    name: Bump JDK{{ $jdkRelease }} Installer URL for {{ title $adoptiumOS }} {{ $adoptiumCPU }}
+    kind: file
+    sourceid: get_{{ $adoptiumOS }}_{{ $adoptiumCPU }}_installer_url
     transformers:
-      - replacer:
-          from: "+"
-          to: "_"
+      - addprefix: '{{ $prefix }} ' # Trailing slash is important! It's the separator
     spec:
-      file: docker-bake.hcl
-      path: variable.JAVA21_VERSION.default
-    scmid: default
-  setJDK21WindowsInstallerUrl:
-    name: Bump JDK21 Installer URL for Windows x64
-    kind: json
-    sourceid: windows_x64_installer_url
-    spec:
-      file: docker-bake.override.json
-      engine: dasel/v2
-      key: variable.jdk_installer_urls.default.windows.amd64.21
-    scmid: default
+      file: adoptium/jdk_installers.txt
+      matchpattern: '{{ $prefix }} (.*)'
+    # scmid: default
+  {{- end }}
 
 actions:
   default:
     kind: github/pullrequest
     scmid: default
-    title: Bump JDK21 version to {{ source "latestJDK21Version" }}
+    title: Bump JDK{{ $jdkRelease }} version to {{ source "latestJDKVersion" }}
     spec:
       labels:
         - dependencies
-        - jdk21
+        - jdk{{ $jdkRelease }}
