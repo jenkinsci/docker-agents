@@ -14,14 +14,6 @@ variable "jdks_in_preview" {
   default = []
 }
 
-variable "JAVA21_VERSION" {
-  default = "21.0.11_10"
-}
-
-variable "JAVA25_VERSION" {
-  default = "25.0.3_9"
-}
-
 variable "REMOTING_VERSION" {
   default = "3385.vf1123fb_515da_"
 }
@@ -76,13 +68,6 @@ variable "WINDOWS_AGENT_TYPE_OVERRIDE" {
   default = ""
 }
 
-variable "jdk_versions" {
-  default = {
-    21 = JAVA21_VERSION
-    25 = JAVA25_VERSION
-  }
-}
-
 ## Targets
 target "alpine" {
   matrix = {
@@ -96,7 +81,7 @@ target "alpine" {
   args = {
     ALPINE_TAG   = ALPINE_FULL_TAG
     VERSION      = REMOTING_VERSION
-    JAVA_VERSION = "${javaversion(jdk)}"
+    JAVA_RELEASE = jdk
   }
   tags      = concat(linux_tags(type, jdk, "alpine"), linux_tags(type, jdk, "alpine${ALPINE_SHORT_TAG}"))
   platforms = ["linux/amd64", "linux/arm64"]
@@ -114,7 +99,7 @@ target "debian" {
   args = {
     VERSION        = REMOTING_VERSION
     DEBIAN_RELEASE = DEBIAN_RELEASE
-    JAVA_VERSION   = "${javaversion(jdk)}"
+    JAVA_RELEASE   = jdk
   }
   tags      = linux_tags(type, jdk, "debian")
   platforms = ["linux/amd64", "linux/arm64", "linux/ppc64le", "linux/s390x", "linux/riscv64"]
@@ -132,7 +117,7 @@ target "rhel_ubi9" {
   args = {
     UBI9_TAG     = UBI9_TAG
     VERSION      = REMOTING_VERSION
-    JAVA_VERSION = "${javaversion(jdk)}"
+    JAVA_RELEASE = jdk
   }
   tags      = linux_tags(type, jdk, "rhel-ubi9")
   platforms = rhel_ubi9_platforms(jdk)
@@ -148,10 +133,9 @@ target "nanoserver" {
   dockerfile = "windows/nanoserver/Dockerfile"
   context    = "."
   args = {
-    JAVA_HOME             = "C:/openjdk-${jdk}"
     VERSION               = REMOTING_VERSION
     WINDOWS_VERSION_TAG   = windows_version
-    JAVA_ZIP_URL          = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
+    JAVA_RELEASE          = jdk
   }
   target    = type
   tags      = windows_tags(type, jdk, "nanoserver-${windows_version}")
@@ -168,10 +152,9 @@ target "windowsservercore" {
   dockerfile = "windows/windowsservercore/Dockerfile"
   context    = "."
   args = {
-    JAVA_HOME             = "C:/openjdk-${jdk}"
+    JAVA_RELEASE          = jdk
     VERSION               = REMOTING_VERSION
     WINDOWS_VERSION_TAG   = windows_version
-    JAVA_ZIP_URL          = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
   }
   target    = type
   tags      = windows_tags(type, jdk, "windowsservercore-${windows_version}")
@@ -212,12 +195,6 @@ function "orgrepo" {
 function "is_default_jdk" {
   params = [jdk]
   result = equal(default_jdk, jdk) ? true : false
-}
-
-# Return the complete Java version corresponding to the jdk passed as parameter
-function "javaversion" {
-  params = [jdk]
-  result = lookup(jdk_versions, jdk, "Unsupported JDK version")
 }
 
 ## Specific functions

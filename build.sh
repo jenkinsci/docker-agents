@@ -70,7 +70,7 @@ if [[ "${target}" = "publish" ]] ; then
     export BUILD_NUMBER=$build_number
   fi
   make show
-  docker buildx bake --push --file docker-bake.hcl --file docker-bake.override.json linux
+  docker buildx bake --push --file docker-bake.hcl linux
   exit_result=$?
 fi
 exit_if_error

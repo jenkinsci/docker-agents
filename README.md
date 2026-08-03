@@ -36,7 +36,7 @@ $ make list
 + make --silent show
 + jq --arg arch linux/arm64 '.target |= with_entries(select(.value.platforms | index($arch)))'
 + make --silent show-all
-+ docker buildx bake --file docker-bake.hcl --file docker-bake.override.json --progress=quiet --print all
++ docker buildx bake --file docker-bake.hcl --progress=quiet --print all
 + jq
 agent_alpine_jdk21
 agent_alpine_jdk25
@@ -58,7 +58,7 @@ To list them all:
 $ make list-all
 + make --silent show-all
 + jq -r '.target | keys[]'
-+ docker buildx bake --file docker-bake.hcl --file docker-bake.override.json --progress=quiet --print all
++ docker buildx bake --file docker-bake.hcl --progress=quiet --print all
 + jq
 agent_alpine_jdk21
 agent_alpine_jdk25
@@ -100,7 +100,7 @@ $ OS=windows ARCH=amd64 make list
 + make --silent show
 + jq --arg arch windows/amd64 '.target |= with_entries(select(.value.platforms | index($arch)))'
 + make --silent show-all
-+ docker buildx bake --file docker-bake.hcl --file docker-bake.override.json --progress=quiet --print all
++ docker buildx bake --file docker-bake.hcl --progress=quiet --print all
 + jq
 agent_nanoserver-ltsc2019_jdk21
 agent_nanoserver-ltsc2019_jdk25
@@ -182,7 +182,7 @@ Note that to see all tags created on publication, you'll have to set `ON_TAG` to
 ```json
 $ make show
 + make --silent show-all
-+ docker buildx bake --file docker-bake.hcl --file docker-bake.override.json --progress=quiet --print all
++ docker buildx bake --file docker-bake.hcl --progress=quiet --print all
 + jq
 {
   "group": {
@@ -222,7 +222,6 @@ $ make show
       "dockerfile": "alpine/Dockerfile",
       "args": {
         "ALPINE_TAG": "3.24.1",
-        "JAVA_VERSION": "25.0.3_10",
         "VERSION": "3385.vf1123fb_515da_"
       },
       "tags": [
@@ -408,7 +407,7 @@ Note: you can generate this docker compose file from docker-bake.hcl yourself wi
 # - Convert with yq to the format expected by docker compose
 # - Store the result in the docker compose file
 
-$ docker buildx bake --progress=quiet --file=docker-bake.hcl --file docker-bake.override.json windows --print \
+$ docker buildx bake --progress=quiet --file=docker-bake.hcl windows --print \
     | yq --prettyPrint '.target[] | del(.output) | {(. | key): {"image": .tags[0], "build": .}}' | yq '{"services": .}' \
     > build-windows_mybuild.yaml
 ```

@@ -28,12 +28,15 @@ FROM mcr.microsoft.com/windows/servercore:"${WINDOWS_VERSION_TAG}" AS jdk-core
 # $ProgressPreference: https://github.com/PowerShell/PowerShell/issues/2138#issuecomment-251261324
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
-ARG JAVA_HOME
-ARG JAVA_ZIP_URL="Provided by docker-bake.hcl"
+ARG JAVA_RELEASE
+ENV JAVA_HOME="C:/openjdk-${JAVA_RELEASE}"
+COPY ./adoptium/jdk_installers.txt "C:\jdk_installers.txt"
 ARG jdkTemp="C:\jdktemp"
 ARG localArchive="${jdkTemp}\jdk.zip"
 RUN New-Item -ItemType Directory -Path $env:jdkTemp | Out-Null ; `
-    Invoke-WebRequest $env:JAVA_ZIP_URL -OutFile $env:localArchive ; `
+    $env:java_url_line = Select-String -Path ".\jdk_installers.txt" -Pattern "jdk${env:JAVA_RELEASE}/windows/amd64" ; `
+    $env:java_zip_url = $env:java_url_line.Split(' ')[1] ; `
+    Invoke-WebRequest "${env:java_zip_url}" -OutFile $env:localArchive ; `
     Expand-Archive -Path $env:localArchive -DestinationPath $env:jdkTemp ; `
     $expandedDir = Get-ChildItem -Path $env:jdkTemp -Directory | Where-Object { $_.Name -like 'jdk*' } ; `
     Move-Item -Path $expandedDir.FullName -Destination $env:JAVA_HOME -Force ; `
@@ -42,8 +45,8 @@ RUN New-Item -ItemType Directory -Path $env:jdkTemp | Out-Null ; `
 ## Agent image target
 FROM mcr.microsoft.com/windows/servercore:"${WINDOWS_VERSION_TAG}" AS agent
 
-ARG JAVA_HOME
-ENV JAVA_HOME=${JAVA_HOME}
+ARG JAVA_RELEASE
+ENV JAVA_HOME="C:/openjdk-${JAVA_RELEASE}"
 
 COPY --from=jdk-core $JAVA_HOME $JAVA_HOME
 

@@ -33,7 +33,7 @@ check_cli = type "$(1)" >/dev/null 2>&1 || { echo "Error: command '$(1)' require
 ## Check if a given image or group exists in the current manifest docker-bake.hcl
 check_image = $(MAKE) --silent list listgroup-all | grep -w '$(1)' >/dev/null 2>&1 || { echo "Error: the image or group '$(1)' does not exist in manifest for the current platform '$(OS)/$(ARCH)'. Please check the output of '$(MAKE) list' or '$(MAKE) listgroup-all'. Exiting." ; exit 1 ; }
 ## Base "docker buildx base" command to be reused everywhere
-bake_base_cli := docker buildx bake --file docker-bake.hcl --file docker-bake.override.json
+bake_base_cli := docker buildx bake --file docker-bake.hcl
 ## Command to be used on build (only)
 bake_cli := $(bake_base_cli) --load
 ## Default bake target
