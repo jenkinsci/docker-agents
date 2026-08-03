@@ -114,7 +114,7 @@ tags-%:
 
 # Return the list of targets depending on the current OS and architecture
 list: check-reqs
-	@set -x; $(MAKE) --silent listarch-$(ARCH)
+	@set -x; $(MAKE) --silent list-all
 
 # Return the list of targets of a specific "target" (can be a docker bake group)
 list-%: check-reqs
@@ -122,7 +122,7 @@ list-%: check-reqs
 
 # Return the list of targets depending on the current OS and architecture
 listarch-%: check-reqs
-	@set -x; $(MAKE) --silent showarch-$* | jq -r '.target | keys[]'
+	@set -x; $(MAKE) --silent showarch-$* | jq -r '. | keys[]'
 
 # Return the list of targets of a specific bake group
 listgroup-%: check-reqs
@@ -166,10 +166,8 @@ ifneq (,$(BATS_FLAGS))
 test-%: bats_flags += $(BATS_FLAGS)
 endif
 test-%: prepare-test
-# Check that the image exists in the manifest
-	@$(call check_image,$*)
 # Ensure that the image is built
-	@set -x; $(MAKE) --silent build-$*
+#@set -x; $(MAKE) --silent build-$*
 	@set -x; $(MAKE) --silent _test-dispatch TARGET=$*
 
 # Dispatch the test depending if it's a bake target or a group

@@ -46,17 +46,18 @@ assert_matches_golden() {
 
 function get_sut_image {
     test -n "${IMAGE:?"[sut_image] Please set the variable 'IMAGE' to the name of the image to test in 'docker-bake.hcl'."}"
+    test -n "${ARCH:?"[sut_image] Please set the variable 'ARCH' to the Linux CPU architecture of the image to test in 'docker-bake.hcl'."}"
     ## Retrieve the SUT image name from buildx
     # Option --print for 'docker buildx bake' prints the JSON configuration on the stdout
     # Option --silent for 'make' suppresses the echoing of command so the output is valid JSON
     # The image name is the 1st of the "tags" array, on the first "image" found
-    make --silent show | jq -r ".target.\"${IMAGE}\".tags[0]"
+    make --silent showarch-"${ARCH}" | jq -r '. | with_entries (select(.key | match("^'"${IMAGE}"'"))) | .tags[0]'
 }
 
 function get_remoting_version() {
-  test -n "${IMAGE:?"[sut_image] Please set the variable 'IMAGE' to the name of the image to test in 'docker-bake.hcl'."}"
+    test -n "${IMAGE:?"[sut_image] Please set the variable 'IMAGE' to the name of the image to test in 'docker-bake.hcl'."}"
 
-  make --silent show | jq -r ".target.\"${IMAGE}\".args.VERSION"
+    make --silent show | jq -r ".target.\"${IMAGE}\".args.VERSION"
 }
 
 function cleanup {
