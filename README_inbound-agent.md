@@ -34,9 +34,9 @@ See [Using Agents](https://www.jenkins.io/doc/book/using/using-agents/) for more
 ### Running this container
 
 To run a Docker container
-  > **Note**  
-  > Remember to replace the `<secret>` and `<agent name>` for secret and agent name, which can be you can get(and set) from [above section](#Setup-the-agent-on-Jenkins).  
-  > Your agent node should be possible to connect to Jenkins controller with agent port (not Jenkins server's port like 80, 443, 8080), which can be set in `Manage Jenkins` > `Security` > `Agent`. Default port is 50000.  
+  > **Note**
+  > Remember to replace the `<secret>` and `<agent name>` for secret and agent name, which can be you can get(and set) from [above section](#Setup-the-agent-on-Jenkins).
+  > Your agent node should be possible to connect to Jenkins controller with agent port (not Jenkins server's port like 80, 443, 8080), which can be set in `Manage Jenkins` > `Security` > `Agent`. Default port is 50000.
 
   Linux agent:
 
@@ -45,7 +45,7 @@ To run a Docker container
 
   Windows agent:
 
-    docker run jenkins/inbound-agent:windowsservercore-ltsc2019 -Url http://jenkins-server:port -Secret <secret> -Name <agent name>
+    docker run jenkins/inbound-agent:windowsservercore-ltsc2022 -Url http://jenkins-server:port -Secret <secret> -Name <agent name>
 
 To run a Docker container with [Work Directory](https://github.com/jenkinsci/remoting/blob/master/docs/workDir.md)
 
@@ -55,7 +55,7 @@ To run a Docker container with [Work Directory](https://github.com/jenkinsci/rem
 
   Windows agent:
 
-    docker run jenkins/inbound-agent:windowsservercore-ltsc2019 -Url http://jenkins-server:port -WorkDir=C:/Jenkins/agent -Secret <secret> -Name <agent name>
+    docker run jenkins/inbound-agent:windowsservercore-ltsc2022 -Url http://jenkins-server:port -WorkDir=C:/Jenkins/agent -Secret <secret> -Name <agent name>
 
 Optional environment variables:
 
@@ -86,7 +86,7 @@ Deprecated environment variables (prefer setting `REMOTING_OPTS`)
 
 ## Windows Jenkins Java Opts
 
-The processing of the JENKINS_JAVA_OPTS environment variable or -JenkinsJavaOpts command line parameter follow the [command parsing semantics of Powershell](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_parsing?view=powershell-7.3). This means that if a parameter contains any characters that are part of an expression in Powershell, it will need to be surrounded by quotes. 
+The processing of the JENKINS_JAVA_OPTS environment variable or -JenkinsJavaOpts command line parameter follow the [command parsing semantics of Powershell](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_parsing?view=powershell-7.3). This means that if a parameter contains any characters that are part of an expression in Powershell, it will need to be surrounded by quotes.
 For example:
 
 -XX:+PrintCommandLineFlags --show-version

@@ -8,7 +8,7 @@ Param(
     # Type of agent ("agent" or "inbound-agent")
     [String] $AgentType = '',
     # Windows flavor and windows version to build
-    [String] $ImageType = 'nanoserver-ltsc2019',
+    [String] $ImageType = 'nanoserver-ltsc2022',
     # Image build number
     [String] $BuildNumber = '1',
     # Generate a docker compose file even if it already exists
@@ -85,7 +85,7 @@ function Test-Image {
         [String] $AgentTypeAndImageName
     )
 
-    # Ex: agent|docker.io/jenkins/agent:jdk21-windowsservercore-ltsc2019|21.0.7_6
+    # Ex: agent|docker.io/jenkins/agent:jdk21-windowsservercore-ltsc2022|21.0.7_6
     $items = $AgentTypeAndImageName.Split('|')
     $agentType = $items[0]
     $imageName = $items[1] -replace 'docker.io/', ''

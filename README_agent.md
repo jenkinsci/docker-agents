@@ -24,7 +24,7 @@ after setting **Remote root directory** to `/home/jenkins/agent`.
 or if using Windows Containers
 
 ```powershell
-docker run -i --rm --name agent --init jenkins/agent:jdk25-windowsservercore-ltsc2019 java -jar C:/ProgramData/Jenkins/agent.jar
+docker run -i --rm --name agent --init jenkins/agent:jdk25-windowsservercore-ltsc2022 java -jar C:/ProgramData/Jenkins/agent.jar
 ```
 
 after setting **Remote root directory** to `C:\Users\jenkins\Agent`.
@@ -43,7 +43,7 @@ docker run -i --rm --name agent1 --init -v agent1-workdir:/home/jenkins/agent je
 Call example for Windows Containers:
 
 ```powershell
-docker run -i --rm --name agent1 --init -v agent1-workdir:C:/Users/jenkins/Work jenkins/agent:jdk25-windowsservercore-ltsc2019 java -jar C:/ProgramData/Jenkins/agent.jar -workDir C:/Users/jenkins/Work
+docker run -i --rm --name agent1 --init -v agent1-workdir:C:/Users/jenkins/Work jenkins/agent:jdk25-windowsservercore-ltsc2022 java -jar C:/ProgramData/Jenkins/agent.jar -workDir C:/Users/jenkins/Work
 ```
 
 ## Configurations

@@ -15,9 +15,6 @@ $global:JAVAMAJORVERSION = $items[0].Remove(0,3)
 $global:WINDOWSFLAVOR = $items[1]
 $global:WINDOWSVERSIONTAG = $items[2]
 $global:WINDOWSVERSIONFALLBACKTAG = $items[2]
-if ($items[2] -eq 'ltsc2019') {
-    $global:WINDOWSVERSIONFALLBACKTAG = '1809'
-}
 
 $random = Get-Random
 $global:CONTAINERNAME = 'pester-jenkins-agent_{0}_{1}' -f $global:IMAGE_TAG, $random
