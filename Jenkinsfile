@@ -41,7 +41,7 @@ def agentSelector(String imageType, retryCounter) {
 
 // Defaul values
 def tagWithOneDashExist = false
-def remotingVersion = '3384.v60d89463d9e0'
+def remotingVersion = '3385.vf1123fb_515da_'
 def buildNumber = env.BUILD_NUMBER
 // Values on tag containing the remoting version and build number
 if (env.TAG_NAME) {
