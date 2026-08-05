@@ -12,15 +12,6 @@ scms:
       token: "{{ requiredEnv .github.token }}"
       username: "{{ .github.username }}"
       branch: "{{ .github.branch }}"
-  temurin21-binaries:
-    kind: "github"
-    spec:
-      user: "{{ .github.user }}"
-      email: "{{ .github.email }}"
-      owner: "adoptium"
-      repository: "temurin21-binaries"
-      token: '{{ requiredEnv .github.token }}'
-      branch: "main"
 
 sources:
   latestJDK21Version:
@@ -30,6 +21,15 @@ sources:
       featureversion: 21
     transformers:
       - trimprefix: "jdk-"
+  windows_x64_installer_url:
+    name: Retrieve the latest Installer URL (ZIP) for Windows x64
+    kind: temurin
+    spec:
+      architecture: x64
+      featureversion: 21
+      operatingsystem: windows
+      releasetype: ga
+      result: installer_url
 
 # Architectures must match those of the targets in docker-bake.hcl
 conditions:
@@ -52,6 +52,7 @@ conditions:
 targets:
   setJDK21VersionDockerBake:
     name: "Bump JDK21 version for Linux images in the docker-bake.hcl file"
+    sourceid: latestJDK21Version
     kind: hcl
     transformers:
       - replacer:
@@ -60,6 +61,15 @@ targets:
     spec:
       file: docker-bake.hcl
       path: variable.JAVA21_VERSION.default
+    scmid: default
+  setJDK21WindowsInstallerUrl:
+    name: Bump JDK21 Installer URL for Windows x64
+    kind: json
+    sourceid: windows_x64_installer_url
+    spec:
+      file: docker-bake.override.json
+      engine: dasel/v2
+      key: variable.jdk_installer_urls.default.windows.amd64.21
     scmid: default
 
 actions:

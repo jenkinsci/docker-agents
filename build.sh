@@ -7,7 +7,7 @@ OPTIND=1
 
 target="build"
 build_number="1"
-remoting_version="3383.vc8881d4b_0e76"
+remoting_version="3385.vf1123fb_515da_"
 exit_result=0
 
 function exit_if_error() {
@@ -70,7 +70,7 @@ if [[ "${target}" = "publish" ]] ; then
     export BUILD_NUMBER=$build_number
   fi
   make show
-  docker buildx bake --push --file docker-bake.hcl linux
+  docker buildx bake --push --file docker-bake.hcl --file docker-bake.override.json linux
   exit_result=$?
 fi
 exit_if_error

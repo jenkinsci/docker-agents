@@ -24,7 +24,7 @@ after setting **Remote root directory** to `/home/jenkins/agent`.
 or if using Windows Containers
 
 ```powershell
-docker run -i --rm --name agent --init jenkins/agent:jdk17-windowsservercore-ltsc2019 java -jar C:/ProgramData/Jenkins/agent.jar
+docker run -i --rm --name agent --init jenkins/agent:jdk25-windowsservercore-ltsc2019 java -jar C:/ProgramData/Jenkins/agent.jar
 ```
 
 after setting **Remote root directory** to `C:\Users\jenkins\Agent`.
@@ -43,7 +43,7 @@ docker run -i --rm --name agent1 --init -v agent1-workdir:/home/jenkins/agent je
 Call example for Windows Containers:
 
 ```powershell
-docker run -i --rm --name agent1 --init -v agent1-workdir:C:/Users/jenkins/Work jenkins/agent:jdk17-windowsservercore-ltsc2019 java -jar C:/ProgramData/Jenkins/agent.jar -workDir C:/Users/jenkins/Work
+docker run -i --rm --name agent1 --init -v agent1-workdir:C:/Users/jenkins/Work jenkins/agent:jdk25-windowsservercore-ltsc2019 java -jar C:/ProgramData/Jenkins/agent.jar -workDir C:/Users/jenkins/Work
 ```
 
 ## Configurations
@@ -71,7 +71,7 @@ The next command is run on a machine using the `Europe/Paris` timezone a few sec
 
 ```bash
 docker run --rm --tty --interactive --env TZ=Asia/Shanghai --entrypoint=date jenkins/agent
-Sat Nov 26 01:27:58 CST 2022 
+Sat Nov 26 01:27:58 CST 2022
 ```
 
 ### Using the `jenkins/agent` image as a base image
@@ -85,7 +85,7 @@ ENV TZ=Asia/Shanghai
  [...]
 RUN ln -snf /usr/share/zoneinfo/"${TZ}" /etc/localtime && echo "${TZ}" > /etc/timezone \
     && dpkg-reconfigure -f noninteractive tzdata \
- [...] 
+ [...]
 ```
 
 ## Changelog
@@ -94,4 +94,3 @@ See [GitHub releases](https://github.com/jenkinsci/docker-agents/releases) for v
 There is no changelog for previous versions, see the commit history.
 
 Jenkins remoting changelogs are available at [https://github.com/jenkinsci/remoting/releases](https://github.com/jenkinsci/remoting/releases).
-

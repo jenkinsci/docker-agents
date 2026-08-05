@@ -2,9 +2,9 @@ Import-Module -DisableNameChecking -Force $PSScriptRoot/test_helpers.psm1
 
 $global:IMAGE_NAME = Get-EnvOrDefault 'IMAGE_NAME' '' # Ex: jenkins/inbound-agent:ltsc2022
 $global:VERSION = Get-EnvOrDefault 'VERSION' ''
-$global:JAVA_VERSION = Get-EnvOrDefault 'JAVA_VERSION' ''
+$global:JAVA_ZIP_URL = 'https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.3%2B9/OpenJDK25U-jdk_x64_windows_hotspot_25.0.3_9.zip'
 
-Write-Host "= TESTS: Preparing $global:IMAGE_NAME with Remoting $global:VERSION and Java $global:JAVA_VERSION"
+Write-Host "= TESTS: Preparing $global:IMAGE_NAME with Remoting $global:VERSION"
 
 $imageItems = $global:IMAGE_NAME.Split(':')
 $GLOBAL:IMAGE_TAG = $imageItems[1]
@@ -31,14 +31,12 @@ if ($global:WINDOWSFLAVOR -eq 'nanoserver') {
 # Get-ChildItem Env: | ForEach-Object { Write-Host "$($_.Name) = $($_.Value)" }
 
 Cleanup($global:CONTAINERNAME)
-Cleanup('nmap')
+Cleanup('ncat-helper')
 CleanupNetwork('jnlp-network')
-
-BuildNcatImage($global:WINDOWSVERSIONTAG)
 
 Describe "[$global:IMAGE_NAME] build image" {
     It 'builds image' {
-        $exitCode, $stdout, $stderr = Run-Program 'docker' "build --build-arg `"VERSION=${global:VERSION}`" --build-arg `"JAVA_VERSION=${global:JAVA_VERSION}`" --build-arg `"JAVA_HOME=C:\openjdk-${global:JAVAMAJORVERSION}`" --build-arg `"WINDOWS_VERSION_TAG=${global:WINDOWSVERSIONTAG}`" --tag=${global:IMAGE_TAG} --file ./windows/${global:WINDOWSFLAVOR}/Dockerfile ."
+        $exitCode, $stdout, $stderr = Run-Program 'docker' "build --build-arg `"VERSION=${global:VERSION}`" --build-arg `"JAVA_ZIP_URL=${global:JAVA_ZIP_URL}`" --build-arg `"JAVA_HOME=C:\openjdk-${global:JAVAMAJORVERSION}`" --build-arg `"WINDOWS_VERSION_TAG=${global:WINDOWSVERSIONTAG}`" --tag=${global:IMAGE_TAG} --file ./windows/${global:WINDOWSFLAVOR}/Dockerfile ."
         $exitCode | Should -Be 0
     }
 }
@@ -83,36 +81,29 @@ Describe "[$global:IMAGE_NAME] image has jenkins-agent.ps1 in the correct locati
 }
 
 Describe "[$global:IMAGE_NAME] image starts jenkins-agent.ps1 correctly (slow test)" {
-    It 'connects to the nmap container' {
+    It 'connects to the ncat-helper container' {
         $exitCode, $stdout, $stderr = Run-Program 'docker' 'network create --driver nat jnlp-network'
-        # Launch the netcat utility, listening at port 5000 for 30 sec
-        # bats will capture the output from netcat and compare the first line
-        # of the header of the first HTTP request with the expected one
-        $exitCode, $stdout, $stderr = Run-Program 'docker' 'run --detach --tty --name nmap --network=jnlp-network nmap:latest ncat.exe -w 30 -l 5000'
-        $exitCode | Should -Be 0
-        Is-ContainerRunning "nmap" | Should -BeTrue
+        Start-NcatContainer -windowsVersionTag $global:WINDOWSVERSIONTAG -networkName 'jnlp-network'
 
-        # get the ip address of the nmap container
-        $exitCode, $stdout, $stderr = Run-Program 'docker' "inspect --format `"{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}`" nmap"
+        $exitCode, $stdout, $stderr = Run-Program 'docker' "inspect --format `"{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}`" ncat-helper"
         $exitCode | Should -Be 0
-        $nmap_ip = $stdout.Trim()
+        $ncat_ip = $stdout.Trim()
 
-        # run Jenkins agent which tries to connect to the nmap container at port 5000
         $secret = "aaa"
         $name = "bbb"
-        $exitCode, $stdout, $stderr = Run-Program 'docker' "run --detach --tty --network=jnlp-network --name $global:CONTAINERNAME $global:IMAGE_NAME -Url http://${nmap_ip}:5000 $secret $name"
+        $exitCode, $stdout, $stderr = Run-Program 'docker' "run --detach --tty --network=jnlp-network --name $global:CONTAINERNAME $global:IMAGE_NAME -Url http://${ncat_ip}:5000 $secret $name"
         $exitCode | Should -Be 0
         Is-ContainerRunning $global:CONTAINERNAME | Should -BeTrue
 
-        $exitCode, $stdout, $stderr = Run-Program 'docker' 'wait nmap'
-        $exitCode, $stdout, $stderr = Run-Program 'docker' 'logs nmap'
+        $exitCode, $stdout, $stderr = Run-Program 'docker' 'wait ncat-helper'
+        $exitCode, $stdout, $stderr = Run-Program 'docker' 'logs ncat-helper'
         $exitCode | Should -Be 0
-        $stdout | Should -Match "GET /tcpSlaveAgentListener/ HTTP/1.1`r"
+        $stdout | Should -Match "GET /tcpSlaveAgentListener/ HTTP/1.1"
     }
 
     AfterAll {
         Cleanup($global:CONTAINERNAME)
-        Cleanup('nmap')
+        Cleanup('ncat-helper')
         CleanupNetwork('jnlp-network')
     }
 }
@@ -121,13 +112,13 @@ Describe "[$global:IMAGE_NAME] custom build args" {
     BeforeAll {
         Push-Location -StackName 'agent' -Path "$PSScriptRoot/.."
         # Old version used to test overriding the build arguments.
-        # This old version must have the same tag suffixes as the current windows images (`-jdk17-nanoserver` etc.), and the same Windows version (2019, 2022, etc.)
+        # This old version must have the same tag suffixes as the current windows images (`-jdk25-nanoserver` etc.), and the same Windows version (2019, 2022, etc.)
         $TEST_VERSION = '3206.vb_15dcf73f6a_9'
         $customImageName = "custom-${global:IMAGE_NAME}"
     }
 
     It 'builds image with arguments' {
-        $exitCode, $stdout, $stderr = Run-Program 'docker' "build --build-arg `"VERSION=${TEST_VERSION}`" --build-arg `"JAVA_VERSION=${global:JAVA_VERSION}`" --build-arg `"JAVA_HOME=C:\openjdk-${global:JAVAMAJORVERSION}`" --build-arg `"WINDOWS_VERSION_TAG=${global:WINDOWSVERSIONTAG}`" --build-arg WINDOWS_FLAVOR=${global:WINDOWSFLAVOR} --build-arg CONTAINER_SHELL=${global:CONTAINERSHELL} --tag=${customImageName} --file=./windows/${global:WINDOWSFLAVOR}/Dockerfile ."
+        $exitCode, $stdout, $stderr = Run-Program 'docker' "build --build-arg `"VERSION=${TEST_VERSION}`" --build-arg `"JAVA_ZIP_URL=${global:JAVA_ZIP_URL}`" --build-arg `"JAVA_HOME=C:\openjdk-${global:JAVAMAJORVERSION}`" --build-arg `"WINDOWS_VERSION_TAG=${global:WINDOWSVERSIONTAG}`" --build-arg WINDOWS_FLAVOR=${global:WINDOWSFLAVOR} --build-arg CONTAINER_SHELL=${global:CONTAINERSHELL} --tag=${customImageName} --file=./windows/${global:WINDOWSFLAVOR}/Dockerfile ."
         $exitCode | Should -Be 0
 
         $exitCode, $stdout, $stderr = Run-Program 'docker' "run --detach --tty --name $global:CONTAINERNAME $customImageName -Cmd $global:CONTAINERSHELL"
@@ -150,22 +141,15 @@ Describe "[$global:IMAGE_NAME] custom build args" {
 Describe "[$global:IMAGE_NAME] passing JVM options (slow test)" {
     It "shows the java version ${global:JAVAMAJORVERSION} with --show-version" {
         $exitCode, $stdout, $stderr = Run-Program 'docker' 'network create --driver nat jnlp-network'
-        # Launch the netcat utility, listening at port 5000 for 30 sec
-        # bats will capture the output from netcat and compare the first line
-        # of the header of the first HTTP request with the expected one
-        $exitCode, $stdout, $stderr = Run-Program 'docker' 'run --detach --tty --name nmap --network=jnlp-network nmap:latest ncat.exe -w 30 -l 5000'
-        $exitCode | Should -Be 0
-        Is-ContainerRunning 'nmap' | Should -BeTrue
+        Start-NcatContainer -windowsVersionTag $global:WINDOWSVERSIONTAG -networkName 'jnlp-network'
 
-        # get the ip address of the nmap container
-        $exitCode, $stdout, $stderr = Run-Program 'docker' "inspect --format `"{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}`" nmap"
+        $exitCode, $stdout, $stderr = Run-Program 'docker' "inspect --format `"{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}`" ncat-helper"
         $exitCode | Should -Be 0
-        $nmap_ip = $stdout.Trim()
+        $ncat_ip = $stdout.Trim()
 
-        # run Jenkins agent which tries to connect to the nmap container at port 5000
         $secret = 'aaa'
         $name = 'bbb'
-        $exitCode, $stdout, $stderr = Run-Program 'docker' "run --detach --tty --network=jnlp-network --name $global:CONTAINERNAME $global:IMAGE_NAME -Url http://${nmap_ip}:5000 -JenkinsJavaOpts `"--show-version`" $secret $name"
+        $exitCode, $stdout, $stderr = Run-Program 'docker' "run --detach --tty --network=jnlp-network --name $global:CONTAINERNAME $global:IMAGE_NAME -Url http://${ncat_ip}:5000 -JenkinsJavaOpts `"--show-version`" $secret $name"
         $exitCode | Should -Be 0
         Is-ContainerRunning $global:CONTAINERNAME | Should -BeTrue
         Start-Sleep -Seconds 20
@@ -176,7 +160,7 @@ Describe "[$global:IMAGE_NAME] passing JVM options (slow test)" {
 
     AfterAll {
         Cleanup($global:CONTAINERNAME)
-        Cleanup('nmap')
+        Cleanup('ncat-helper')
         CleanupNetwork('jnlp-network')
     }
 }

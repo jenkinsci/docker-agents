@@ -41,7 +41,7 @@ def agentSelector(String imageType, retryCounter) {
 
 // Defaul values
 def tagWithOneDashExist = false
-def remotingVersion = '3383.vc8881d4b_0e76'
+def remotingVersion = '3385.vf1123fb_515da_'
 def buildNumber = env.BUILD_NUMBER
 // Values on tag containing the remoting version and build number
 if (env.TAG_NAME) {
@@ -63,10 +63,8 @@ def parallelStages = [failFast: false]
     'agent_alpine_jdk25',
     'inbound-agent_alpine_jdk21',
     'inbound-agent_alpine_jdk25',
-    'agent_debian_jdk17',
     'agent_debian_jdk21',
     'agent_debian_jdk25',
-    'inbound-agent_debian_jdk17',
     'inbound-agent_debian_jdk21',
     'inbound-agent_debian_jdk25',
     'rhel_ubi9',

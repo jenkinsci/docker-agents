@@ -125,15 +125,28 @@ function Run-Program($cmd, $params) {
     return $proc.ExitCode, $stdout, $stderr
 }
 
-function BuildNcatImage($windowsVersionTag) {
-    Write-Host "Building nmap image (Windows version '${windowsVersionTag}') for testing"
-    $exitCode, $stdout, $stderr = Run-Program 'docker.exe' 'inspect --type=image nmap' $true
-    if ($exitCode -ne 0) {
-        Push-Location -StackName 'agent' -Path "$PSScriptRoot/.."
-        $exitCode, $stdout, $stderr = Run-Program 'docker.exe' "build -t nmap --build-arg `"WINDOWS_VERSION_TAG=${windowsVersionTag}`" -f ./tests/netcat-helper/Dockerfile-windows ./tests/netcat-helper"
-        $exitCode | Should -Be 0
-        Pop-Location -StackName 'agent'
-    }
+function Start-NcatContainer($windowsVersionTag, $networkName, $port = 5000, $timeoutSeconds = 30) {
+    $listenerScript = @"
+`$listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Any, $port)
+`$listener.Start()
+try {
+    `$task = `$listener.AcceptTcpClientAsync()
+    if (-not `$task.Wait(${timeoutSeconds}000)) { exit 1 }
+    `$client = `$task.Result
+    `$stream  = `$client.GetStream()
+    `$stream.ReadTimeout = ${timeoutSeconds}000
+    `$buf = New-Object byte[] 65536
+    `$n   = `$stream.Read(`$buf, 0, `$buf.Length)
+    [Text.Encoding]::ASCII.GetString(`$buf, 0, `$n)
+    `$client.Close()
+} finally {
+    `$listener.Stop()
+}
+"@
+    $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($listenerScript))
+    $exitCode, $stdout, $stderr = Run-Program 'docker' "run --detach --tty --name ncat-helper --network=${networkName} mcr.microsoft.com/windows/servercore:${windowsVersionTag} powershell.exe -NonInteractive -EncodedCommand $encoded"
+    $exitCode | Should -Be 0
+    Is-ContainerRunning 'ncat-helper' | Should -BeTrue
 }
 
 function CleanupNetwork($name) {

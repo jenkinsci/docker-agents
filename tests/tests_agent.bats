@@ -4,7 +4,7 @@ load test_helpers
 load 'test_helper/bats-support/load' # this is required by bats-assert!
 load 'test_helper/bats-assert/load'
 
-IMAGE=${IMAGE:-debian_jdk17}
+IMAGE=${IMAGE:-debian_jdk25}
 SUT_IMAGE=$(get_sut_image)
 
 ARCH=${ARCH:-x86_64}
@@ -99,7 +99,7 @@ GIT_LFS_VERSION='3.7.1'
 @test "[${SUT_IMAGE}] use build args correctly" {
   cd "${BATS_TEST_DIRNAME}"/.. || false
 
-  local TEST_VERSION="3025.vf64a_a_3da_6b_55" # Older version, must work with JDK17 and should contain https://github.com/jenkinsci/remoting/pull/532
+  local TEST_VERSION="3025.vf64a_a_3da_6b_55" # Older version should contain https://github.com/jenkinsci/remoting/pull/532
   local TEST_USER="test-user"
   local TEST_GROUP="test-group"
   local TEST_UID=2000

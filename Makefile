@@ -33,7 +33,7 @@ check_cli = type "$(1)" >/dev/null 2>&1 || { echo "Error: command '$(1)' require
 ## Check if a given image or group exists in the current manifest docker-bake.hcl
 check_image = $(MAKE) --silent list listgroup-all | grep -w '$(1)' >/dev/null 2>&1 || { echo "Error: the image or group '$(1)' does not exist in manifest for the current platform '$(OS)/$(ARCH)'. Please check the output of '$(MAKE) list' or '$(MAKE) listgroup-all'. Exiting." ; exit 1 ; }
 ## Base "docker buildx base" command to be reused everywhere
-bake_base_cli := docker buildx bake --file docker-bake.hcl
+bake_base_cli := docker buildx bake --file docker-bake.hcl --file docker-bake.override.json
 ## Command to be used on build (only)
 bake_cli := $(bake_base_cli) --load
 ## Default bake target
@@ -131,7 +131,7 @@ listgroup-%: check-reqs
 
 # Ensure bats exists in the current folder
 bats:
-	git clone --branch v1.13.0 https://github.com/bats-core/bats-core ./bats
+	git clone --branch v1.14.0 https://github.com/bats-core/bats-core ./bats
 
 # Ensure all bats submodules are up to date
 prepare-test: bats check-reqs target
@@ -151,7 +151,7 @@ publish-%: target show-%
 
 ## Define bats options based on environment
 # common flags for all tests
-bats_flags := ""
+bats_flags := --formatter pretty
 # if DISABLE_PARALLEL_TESTS true, then disable parallel execution
 ifneq (true,$(DISABLE_PARALLEL_TESTS))
 # If the GNU 'parallel' command line is absent, then disable parallel execution
@@ -193,10 +193,11 @@ _test-image:
 # Each type of image ("agent" or "inbound-agent") has its own tests suite
 ifeq ($(CI), true)
 # Execute the test harness and write result to a TAP file
-	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --formatter junit | tee target/junit-results-$(TARGET).xml
+	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --report-formatter junit --output target/ | tee target/junit-results-$(TARGET).xml
+	mv target/report.xml target/junit-results-$(TARGET).xml
 else
 # Execute the test harness
-	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --formatter pretty --timing
+	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --timing
 endif
 
 # Test all targets depending on the current OS and architecture
