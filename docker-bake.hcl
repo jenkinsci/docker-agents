@@ -15,7 +15,7 @@ variable "jdks_in_preview" {
 }
 
 variable "JAVA21_VERSION" {
-  default = "21.0.11_10"
+  default = "21.0.12_8"
 }
 
 variable "JAVA25_VERSION" {
@@ -148,10 +148,10 @@ target "nanoserver" {
   dockerfile = "windows/nanoserver/Dockerfile"
   context    = "."
   args = {
-    JAVA_HOME             = "C:/openjdk-${jdk}"
-    VERSION               = REMOTING_VERSION
-    WINDOWS_VERSION_TAG   = windows_version
-    JAVA_ZIP_URL          = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
+    JAVA_HOME           = "C:/openjdk-${jdk}"
+    VERSION             = REMOTING_VERSION
+    WINDOWS_VERSION_TAG = windows_version
+    JAVA_ZIP_URL        = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
   }
   target    = type
   tags      = windows_tags(type, jdk, "nanoserver-${windows_version}")
@@ -168,10 +168,10 @@ target "windowsservercore" {
   dockerfile = "windows/windowsservercore/Dockerfile"
   context    = "."
   args = {
-    JAVA_HOME             = "C:/openjdk-${jdk}"
-    VERSION               = REMOTING_VERSION
-    WINDOWS_VERSION_TAG   = windows_version
-    JAVA_ZIP_URL          = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
+    JAVA_HOME           = "C:/openjdk-${jdk}"
+    VERSION             = REMOTING_VERSION
+    WINDOWS_VERSION_TAG = windows_version
+    JAVA_ZIP_URL        = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
   }
   target    = type
   tags      = windows_tags(type, jdk, "windowsservercore-${windows_version}")
