@@ -149,7 +149,6 @@ target "nanoserver" {
   context    = "."
   args = {
     JAVA_HOME             = "C:/openjdk-${jdk}"
-    TOOLS_WINDOWS_VERSION = "${toolsversion(windows_version)}"
     VERSION               = REMOTING_VERSION
     WINDOWS_VERSION_TAG   = windows_version
     JAVA_ZIP_URL          = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
@@ -170,7 +169,6 @@ target "windowsservercore" {
   context    = "."
   args = {
     JAVA_HOME             = "C:/openjdk-${jdk}"
-    TOOLS_WINDOWS_VERSION = "${toolsversion(windows_version)}"
     VERSION               = REMOTING_VERSION
     WINDOWS_VERSION_TAG   = windows_version
     JAVA_ZIP_URL          = lookup(jdk_installer_urls["windows"]["amd64"], jdk, "Installer URL not found")
@@ -240,15 +238,6 @@ function "windowsagenttypes" {
   result = (notequal(override, "")
     ? [override]
   : agent_types_to_build)
-}
-
-# Return the Windows version to use as base image for the Windows version passed as parameter
-# There is no mcr.microsoft.com/powershell ltsc2019 base image, using a "1809" instead
-function "toolsversion" {
-  params = [version]
-  result = (equal("ltsc2019", version)
-    ? "1809"
-  : version)
 }
 
 # Return an array of RHEL UBI 9 platforms to use depending on the jdk passed as parameter

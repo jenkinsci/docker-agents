@@ -23,8 +23,7 @@
 #  THE SOFTWARE.
 
 ARG WINDOWS_VERSION_TAG=ltsc2019
-ARG TOOLS_WINDOWS_VERSION=1809
-FROM mcr.microsoft.com/windows/servercore:"${WINDOWS_VERSION_TAG}" AS jdk-core
+FROM mcr.microsoft.com/windows/servercore:"${WINDOWS_VERSION_TAG}" AS jdk-pwsh
 
 # $ProgressPreference: https://github.com/PowerShell/PowerShell/issues/2138#issuecomment-251261324
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
@@ -40,7 +39,14 @@ RUN New-Item -ItemType Directory -Path $env:jdkTemp | Out-Null ; `
     Move-Item -Path $expandedDir.FullName -Destination $env:JAVA_HOME -Force ; `
     Remove-Item -Path $env:jdkTemp -Recurse | Out-Null
 
-FROM mcr.microsoft.com/powershell:nanoserver-"${TOOLS_WINDOWS_VERSION}" AS pwsh-source
+ARG PWSH_VERSION=7.3.9
+RUN $zip = Join-Path $env:TEMP "pwsh.zip" ; `
+    $dest = 'C:\pwsh' ; `
+    $url = 'https://github.com/PowerShell/PowerShell/releases/download/v{0}/PowerShell-{0}-win-x64.zip' -f $env:PWSH_VERSION ; `
+    Invoke-WebRequest -Uri $url -OutFile $zip ; `
+    New-Item -ItemType Directory -Path $dest -Force | Out-Null ; `
+    Expand-Archive -Path $zip -DestinationPath $dest ; `
+    Remove-Item -Path $zip
 
 ## Agent image target
 FROM mcr.microsoft.com/windows/nanoserver:"${WINDOWS_VERSION_TAG}" AS agent
@@ -50,10 +56,10 @@ ENV PSHOME="C:\Program Files\PowerShell"
 ENV PATH="C:\Windows\system32;C:\Windows;${PSHOME};"
 
 # The nanoserver image lacks components required for the local user account setup below
-COPY --from=jdk-core /windows/system32/netapi32.dll /windows/system32/netapi32.dll
-COPY --from=jdk-core /windows/system32/whoami.exe /windows/system32/whoami.exe
-COPY --from=jdk-core $JAVA_HOME $JAVA_HOME
-COPY --from=pwsh-source $PSHOME $PSHOME
+COPY --from=jdk-pwsh /windows/system32/netapi32.dll /windows/system32/netapi32.dll
+COPY --from=jdk-pwsh /windows/system32/whoami.exe /windows/system32/whoami.exe
+COPY --from=jdk-pwsh $JAVA_HOME $JAVA_HOME
+COPY --from=jdk-pwsh /pwsh $PSHOME
 
 SHELL ["pwsh.exe", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 USER ContainerAdministrator

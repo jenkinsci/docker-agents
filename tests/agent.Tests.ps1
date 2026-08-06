@@ -14,10 +14,6 @@ $items = $global:IMAGE_TAG.Split('-')
 $global:JAVAMAJORVERSION = $items[0].Remove(0,3)
 $global:WINDOWSFLAVOR = $items[1]
 $global:WINDOWSVERSIONTAG = $items[2]
-$global:WINDOWSVERSIONFALLBACKTAG = $items[2]
-if ($items[2] -eq 'ltsc2019') {
-    $global:WINDOWSVERSIONFALLBACKTAG = '1809'
-}
 
 $random = Get-Random
 $global:CONTAINERNAME = 'pester-jenkins-agent_{0}_{1}' -f $global:IMAGE_TAG, $random
@@ -29,6 +25,7 @@ if ($global:WINDOWSFLAVOR -eq 'nanoserver') {
 }
 
 $global:GITLFSVERSION = '3.7.1'
+$global:PWSHVERSION = '7.3.9'
 
 # # Uncomment to help debugging when working on this script
 # Write-Host "= DEBUG: global vars"
@@ -64,10 +61,7 @@ Describe "[$global:IMAGE_NAME] image has correct applications in the PATH" {
         $exitCode, $stdout, $stderr = Run-Program 'docker' "exec $global:CONTAINERNAME $global:CONTAINERSHELL -C `"if (`$null -eq (Get-Command java.exe -ErrorAction SilentlyContinue)) { exit -1 } else { exit 0 }`""
         $exitCode | Should -Be 0
         $exitCode, $stdout, $stderr = Run-Program 'docker' "exec $global:CONTAINERNAME $global:CONTAINERSHELL -C `"`$global:VERSION = java -version 2>&1 ; Write-Host `$global:VERSION`""
-        $r = [regex] "^openjdk version `"(?<major>\d+)"
-        $m = $r.Match($stdout)
-        $m | Should -Not -Be $null
-        $m.Groups['major'].ToString() | Should -Be $global:JAVAMAJORVERSION
+        $stdout.Trim() | Should -Match "^openjdk version `"$global:JAVAMAJORVERSION"
     }
 
     It 'has AGENT_WORKDIR in the environment' {
@@ -82,13 +76,18 @@ Describe "[$global:IMAGE_NAME] image has correct applications in the PATH" {
         $stdout.Trim() | Should -Match 'user.*jenkins'
     }
 
-    It 'has git-lfs (and thus git) installed' {
+    It 'has git-lfs (and thus git) installed and in the path' {
         $exitCode, $stdout, $stderr = Run-Program 'docker' "exec $global:CONTAINERNAME $global:CONTAINERSHELL -C `"`& git lfs env`""
         $exitCode | Should -Be 0
-        $r = [regex] "^git-lfs/(?<version>\d+\.\d+\.\d+)"
-        $m = $r.Match($stdout)
-        $m | Should -Not -Be $null
-        $m.Groups['version'].ToString() | Should -Be "$global:GITLFSVERSION"
+        $stdout.Trim() | Should -Match "^git-lfs/$([regex]::Escape($global:GITLFSVERSION))"
+    }
+
+    if ($global:WINDOWSFLAVOR -eq 'nanoserver') {
+        It 'has expected pwsh installed and in the path' {
+            $exitCode, $stdout, $stderr = Run-Program 'docker' "exec $global:CONTAINERNAME $global:CONTAINERSHELL -C `"`$PSVersionTable.PSVersion.ToString()`""
+            $exitCode | Should -Be 0
+            $stdout.Trim() | Should -Match "^$([regex]::Escape($global:PWSHVERSION))"
+        }
     }
 
     It 'does not include jenkins-agent.ps1 (inbound-agent)' {
@@ -156,7 +155,7 @@ Describe "[$global:IMAGE_NAME] can be built with custom build arguments" {
     BeforeAll {
         Push-Location -StackName 'agent' -Path "$PSScriptRoot/.."
 
-        $exitCode, $stdout, $stderr = Run-Program 'docker' "build --target agent --build-arg `"VERSION=${global:TEST_VERSION}`" --build-arg `"JAVA_ZIP_URL=${global:JAVA_ZIP_URL}`" --build-arg `"JAVA_HOME=C:\openjdk-${global:JAVAMAJORVERSION}`" --build-arg `"WINDOWS_VERSION_TAG=${global:WINDOWSVERSIONTAG}`" --build-arg `"TOOLS_WINDOWS_VERSION=${global:WINDOWSVERSIONFALLBACKTAG}`" --build-arg `"user=${global:TEST_USER}`" --build-arg `"AGENT_WORKDIR=${global:TEST_AGENT_WORKDIR}`" --tag ${global:IMAGE_NAME} --file ./windows/${global:WINDOWSFLAVOR}/Dockerfile ."
+        $exitCode, $stdout, $stderr = Run-Program 'docker' "build --target agent --build-arg `"VERSION=${global:TEST_VERSION}`" --build-arg `"JAVA_ZIP_URL=${global:JAVA_ZIP_URL}`" --build-arg `"JAVA_HOME=C:\openjdk-${global:JAVAMAJORVERSION}`" --build-arg `"WINDOWS_VERSION_TAG=${global:WINDOWSVERSIONTAG}`" --build-arg `"user=${global:TEST_USER}`" --build-arg `"AGENT_WORKDIR=${global:TEST_AGENT_WORKDIR}`" --tag ${global:IMAGE_NAME} --file ./windows/${global:WINDOWSFLAVOR}/Dockerfile ."
         $exitCode | Should -Be 0
 
         $exitCode, $stdout, $stderr = Run-Program 'docker' "run -d -it --name $global:CONTAINERNAME -P $global:IMAGE_NAME $global:CONTAINERSHELL"
