@@ -17,7 +17,7 @@ RUN dnf install --disableplugin=subscription-manager --setopt=install_weak_deps=
     curl \
     tar \
   && dnf clean --disableplugin=subscription-manager all \
-  && java_zip_url="$(grep "jdk${JAVA_RELEASE}/${TARGETPLATFORM}/glibc"  /tmp/jdk_installers.txt | cut -d' ' -f2)" \
+  && java_zip_url="$(grep "jdk${JAVA_RELEASE}/${TARGETPLATFORM}/glibc" /tmp/jdk_installers.txt | cut -d' ' -f2)" \
   && mkdir -p "${TEMP_JAVA_HOME}" \
   && jdk_archive="/opt/jdk.zip" \
   && curl --silent --show-error --location --output "${jdk_archive}" "${java_zip_url}" \
