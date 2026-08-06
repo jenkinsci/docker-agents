@@ -31,22 +31,14 @@ SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPref
 ARG JAVA_RELEASE
 ENV JAVA_HOME="C:/openjdk-${JAVA_RELEASE}"
 COPY ./adoptium/jdk_installers.txt "C:\jdk_installers.txt"
-RUN New-Item -ItemType Directory -Path $env:jdkTemp | Out-Null ; `
-    $env:java_url_line = Select-String -Path ".\jdk_installers.txt" -Pattern "jdk${env:JAVA_RELEASE}/windows/amd64" ; `
-    $env:java_zip_url = $env:java_url_line.Split(' ')[1] ; `
-    Invoke-WebRequest "${env:java_zip_url}" -OutFile $env:localArchive ; `
-    Expand-Archive -Path $env:localArchive -DestinationPath $env:jdkTemp ; `
-    $expandedDir = Get-ChildItem -Path $env:jdkTemp -Directory | Where-Object { $_.Name -like 'jdk*' } ; `
-    Move-Item -Path $expandedDir.FullName -Destination $env:JAVA_HOME -Force ; `
-    $jdkTemp = 'C:\jdktemp' ; `
+RUN $jdkTemp = 'C:\jdktemp' ; `
     $zip = Join-Path $jdkTemp 'jdk.zip' ; `
-    $urls = Select-String -Path ".\jdk_installers.txt" -Pattern "jdk${env:JAVA_RELEASE}/windows/amd64" ; `
-    $url = $urls.Split(' ')[1] ; `
+    New-Item -ItemType Directory -Path $jdkTemp | Out-Null ; `
+    $url = (Get-Content .\jdk_installers.txt | Where-Object { $_ -match ('jdk{0}/windows/amd64' -f $env:JAVA_RELEASE) } | Select-Object -First 1).Split(' ')[1] ;  `
     Invoke-WebRequest $url -OutFile $zip ; `
     Expand-Archive -Path $zip -DestinationPath $jdkTemp ; `
     $expandedDir = Get-ChildItem -Path $jdkTemp -Directory | Where-Object { $_.Name -like 'jdk*' } ; `
-   Move-Item -Path $expandedDir.FullName -Destination $env:JAVA_HOME -Force ; `
-   Remove-Item -Path $jdkTemp -Recurse | Out-Null
+    Move-Item -Path $expandedDir.FullName -Destination $env:JAVA_HOME -Force
 
 ARG PWSH_VERSION=7.3.9
 RUN $zip = Join-Path $env:TEMP "pwsh.zip" ; `
