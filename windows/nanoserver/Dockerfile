@@ -22,38 +22,46 @@
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 #  THE SOFTWARE.
 
-ARG WINDOWS_VERSION_TAG
-ARG TOOLS_WINDOWS_VERSION
-FROM mcr.microsoft.com/windows/servercore:"${WINDOWS_VERSION_TAG}" AS jdk-core
+ARG WINDOWS_VERSION_TAG=ltsc2019
+FROM mcr.microsoft.com/windows/servercore:"${WINDOWS_VERSION_TAG}" AS jdk-pwsh
 
 # $ProgressPreference: https://github.com/PowerShell/PowerShell/issues/2138#issuecomment-251261324
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
-ARG JAVA_HOME
-ARG JAVA_ZIP_URL="Provided by docker-bake.hcl"
-ARG jdkTemp="C:\jdktemp"
-ARG localArchive="${jdkTemp}\jdk.zip"
-RUN New-Item -ItemType Directory -Path $env:jdkTemp | Out-Null ; `
-    Invoke-WebRequest $env:JAVA_ZIP_URL -OutFile $env:localArchive ; `
-    Expand-Archive -Path $env:localArchive -DestinationPath $env:jdkTemp ; `
-    $expandedDir = Get-ChildItem -Path $env:jdkTemp -Directory | Where-Object { $_.Name -like 'jdk*' } ; `
-    Move-Item -Path $expandedDir.FullName -Destination $env:JAVA_HOME -Force ; `
-    Remove-Item -Path $env:jdkTemp -Recurse | Out-Null
+ARG JAVA_RELEASE
+ENV JAVA_HOME="C:/openjdk-${JAVA_RELEASE}"
+COPY ./adoptium/jdk_installers.txt "C:\jdk_installers.txt"
+RUN $jdkTemp = 'C:\jdktemp' ; `
+    $zip = Join-Path $jdkTemp 'jdk.zip' ; `
+    New-Item -ItemType Directory -Path $jdkTemp | Out-Null ; `
+    $url = (Get-Content .\jdk_installers.txt | Where-Object { $_ -match ('jdk{0}/windows/amd64' -f $env:JAVA_RELEASE) } | Select-Object -First 1).Split(' ')[1] ;  `
+    Invoke-WebRequest $url -OutFile $zip ; `
+    Expand-Archive -Path $zip -DestinationPath $jdkTemp ; `
+    $expandedDir = Get-ChildItem -Path $jdkTemp -Directory | Where-Object { $_.Name -like 'jdk*' } ; `
+    Move-Item -Path $expandedDir.FullName -Destination $env:JAVA_HOME -Force
 
-FROM mcr.microsoft.com/powershell:nanoserver-"${TOOLS_WINDOWS_VERSION}" AS pwsh-source
+ARG PWSH_VERSION=7.3.9
+RUN $zip = Join-Path $env:TEMP "pwsh.zip" ; `
+    $dest = 'C:\pwsh' ; `
+    $url = 'https://github.com/PowerShell/PowerShell/releases/download/v{0}/PowerShell-{0}-win-x64.zip' -f $env:PWSH_VERSION ; `
+    Invoke-WebRequest -Uri $url -OutFile $zip ; `
+    New-Item -ItemType Directory -Path $dest -Force | Out-Null ; `
+    Expand-Archive -Path $zip -DestinationPath $dest ; `
+    Remove-Item -Path $zip
 
 ## Agent image target
 FROM mcr.microsoft.com/windows/nanoserver:"${WINDOWS_VERSION_TAG}" AS agent
 
-ARG JAVA_HOME
+ARG JAVA_RELEASE
+ENV JAVA_HOME="C:/openjdk-${JAVA_RELEASE}"
 ENV PSHOME="C:\Program Files\PowerShell"
 ENV PATH="C:\Windows\system32;C:\Windows;${PSHOME};"
 
 # The nanoserver image lacks components required for the local user account setup below
-COPY --from=jdk-core /windows/system32/netapi32.dll /windows/system32/netapi32.dll
-COPY --from=jdk-core /windows/system32/whoami.exe /windows/system32/whoami.exe
-COPY --from=jdk-core $JAVA_HOME $JAVA_HOME
-COPY --from=pwsh-source $PSHOME $PSHOME
+COPY --from=jdk-pwsh /windows/system32/netapi32.dll /windows/system32/netapi32.dll
+COPY --from=jdk-pwsh /windows/system32/whoami.exe /windows/system32/whoami.exe
+COPY --from=jdk-pwsh $JAVA_HOME $JAVA_HOME
+COPY --from=jdk-pwsh /pwsh $PSHOME
 
 SHELL ["pwsh.exe", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 USER ContainerAdministrator
@@ -70,8 +78,7 @@ RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tl
     Remove-Item mingit.zip -Force
 
 ENV ProgramFiles="C:\Program Files" `
-    WindowsPATH="C:\Windows\system32;C:\Windows" `
-    JAVA_HOME="${JAVA_HOME}"
+    WindowsPATH="C:\Windows\system32;C:\Windows"
 ENV PATH="${WindowsPATH};${ProgramFiles}\PowerShell;${JAVA_HOME}\bin;C:\mingit\cmd"
 
 ARG GIT_LFS_VERSION=3.7.1
@@ -102,7 +109,7 @@ ARG AGENT_WORKDIR=${AGENT_ROOT}/Work
 ENV AGENT_WORKDIR=${AGENT_WORKDIR}
 
 # Get the Agent from the Jenkins Artifacts Repository
-ARG VERSION=3384.v60d89463d9e0
+ARG VERSION=3385.vf1123fb_515da_
 RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; `
     Invoke-WebRequest $('https://repo.jenkins-ci.org/public/org/jenkins-ci/main/remoting/{0}/remoting-{0}.jar' -f $env:VERSION) -OutFile $(Join-Path C:/ProgramData/Jenkins $env:AGENT_FILENAME) -UseBasicParsing ; `
     Invoke-WebRequest $('https://repo.jenkins-ci.org/public/org/jenkins-ci/main/remoting/{0}/remoting-{0}.jar.sha1' -f $env:VERSION) -OutFile (Join-Path C:/ProgramData/Jenkins $env:AGENT_HASH_FILENAME) -UseBasicParsing ; `

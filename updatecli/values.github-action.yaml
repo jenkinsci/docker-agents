@@ -6,5 +6,3 @@ github:
   branch: "master"
   owner: "jenkinsci"
   repository: "docker-agent"
-temurin:
-  version_pattern: "^jdk-[21|25].(\\d*).(\\d*).(\\d*)(.(\\d*))\\+(\\d*)?$"

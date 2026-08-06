@@ -19,7 +19,7 @@
 #  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 #  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 #  THE SOFTWARE.
-ARG DEBIAN_RELEASE=trixie-20260713
+ARG DEBIAN_RELEASE=trixie-20260803
 FROM debian:"${DEBIAN_RELEASE}"-slim AS jre-build
 
 SHELL ["/bin/bash", "-e", "-u", "-o", "pipefail", "-c"]
@@ -28,19 +28,24 @@ SHELL ["/bin/bash", "-e", "-u", "-o", "pipefail", "-c"]
 # Ref. https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
 ARG TARGETPLATFORM
 
-COPY adoptium-get-jdk-link.sh /usr/bin/local/adoptium-get-jdk-link.sh
-COPY adoptium-install-jdk.sh /usr/bin/local/adoptium-install-jdk.sh
-
-ARG JAVA_VERSION
+ARG JAVA_RELEASE
+COPY ./adoptium/jdk_installers.txt /tmp/jdk_installers.txt
+ARG TEMP_JAVA_HOME=/opt/jdk
+ENV PATH="${TEMP_JAVA_HOME}/bin:${PATH}"
 # hadolint ignore=DL3008
-RUN set -x; apt-get update \
+RUN apt-get update \
   && apt-get install --no-install-recommends -y \
     ca-certificates \
-    jq \
     curl \
-  && /usr/bin/local/adoptium-install-jdk.sh
-
-ENV PATH="/opt/jdk-${JAVA_VERSION}/bin:${PATH}"
+    tar \
+  && java_zip_url="$(grep "jdk${JAVA_RELEASE}/${TARGETPLATFORM}/glibc" /tmp/jdk_installers.txt | cut -d' ' -f2)" \
+  && mkdir -p "${TEMP_JAVA_HOME}" \
+  && jdk_archive="/opt/jdk.zip" \
+  && curl --silent --show-error --location --output "${jdk_archive}" "${java_zip_url}" \
+  # TODO: Verify download with GPG
+  && tar xzf "${jdk_archive}" --strip-components=1 -C "${TEMP_JAVA_HOME}" \
+  && java --version \
+  && jlink --version
 
 # Generate smaller java runtime without unneeded files
 # for now we include the full module path to maintain compatibility
@@ -53,7 +58,7 @@ RUN java_major_version="$(jlink --version 2>&1 | cut -c1-2)"; \
     # because jlink fails with the error "jmods: Value too large for defined data type" error.
     # For JDK25, we need to have a proper test and validation process first cf https://github.com/jenkinsci/docker-agents/issues/1124)
     # Noting there isn't any JMODs shipped anymore since https://adoptium.net/en-GB/news/2025/08/eclipse-temurin-jdk24-JEP493-enabled
-    cp -r "/opt/jdk-${JAVA_VERSION}" /javaruntime; \
+    mv "${TEMP_JAVA_HOME}" /javaruntime; \
   else \
     case "$(jlink --version 2>&1 | cut -c1-2)" in \
       "21") options="--compress=zip-6 --add-modules ALL-MODULE-PATH" ;; \
@@ -99,7 +104,7 @@ RUN apt-get update \
   && apt-get clean \
   && rm -rf /tmp/* /var/cache/* /var/lib/apt/lists/*
 
-ARG VERSION=3384.v60d89463d9e0
+ARG VERSION=3385.vf1123fb_515da_
 ADD --chown="${user}":"${group}" "https://repo.jenkins-ci.org/public/org/jenkins-ci/main/remoting/${VERSION}/remoting-${VERSION}.jar" /usr/share/jenkins/agent.jar
 RUN chmod 0644 /usr/share/jenkins/agent.jar \
   && ln -sf /usr/share/jenkins/agent.jar /usr/share/jenkins/slave.jar

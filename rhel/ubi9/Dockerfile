@@ -1,4 +1,4 @@
-ARG UBI9_TAG=9.8-1785807559
+ARG UBI9_TAG=9.8-1785906690
 FROM registry.access.redhat.com/ubi9/ubi:"${UBI9_TAG}" AS jre-build
 
 SHELL ["/bin/bash", "-e", "-u", "-o", "pipefail", "-c"]
@@ -7,20 +7,24 @@ SHELL ["/bin/bash", "-e", "-u", "-o", "pipefail", "-c"]
 # Ref. https://docs.docker.com/engine/reference/builder/#automatic-platform-args-in-the-global-scope
 ARG TARGETPLATFORM
 
-COPY adoptium-get-jdk-link.sh /usr/bin/local/adoptium-get-jdk-link.sh
-COPY adoptium-install-jdk.sh /usr/bin/local/adoptium-install-jdk.sh
-
-ARG JAVA_VERSION
-
+ARG JAVA_RELEASE
+COPY ./adoptium/jdk_installers.txt /tmp/jdk_installers.txt
+ARG TEMP_JAVA_HOME=/opt/jdk
+ENV PATH="${TEMP_JAVA_HOME}/bin:${PATH}"
 # hadolint ignore=DL3041
 RUN dnf install --disableplugin=subscription-manager --setopt=install_weak_deps=0 --setopt=tsflags=nodocs --allowerasing -y \
     ca-certificates \
     curl \
-    jq \
-    && dnf clean --disableplugin=subscription-manager all \
-    && /usr/bin/local/adoptium-install-jdk.sh
-
-ENV PATH="/opt/jdk-${JAVA_VERSION}/bin:${PATH}"
+    tar \
+  && dnf clean --disableplugin=subscription-manager all \
+  && java_zip_url="$(grep "jdk${JAVA_RELEASE}/${TARGETPLATFORM}/glibc" /tmp/jdk_installers.txt | cut -d' ' -f2)" \
+  && mkdir -p "${TEMP_JAVA_HOME}" \
+  && jdk_archive="/opt/jdk.zip" \
+  && curl --silent --show-error --location --output "${jdk_archive}" "${java_zip_url}" \
+  # TODO: Verify download with GPG
+  && tar xzf "${jdk_archive}" --strip-components=1 -C "${TEMP_JAVA_HOME}" \
+  && java --version \
+  && jlink --version
 
 # Generate smaller java runtime without unneeded files
 # for now we include the full module path to maintain compatibility
@@ -33,7 +37,7 @@ RUN java_major_version="$(jlink --version 2>&1 | cut -c1-2)"; \
     # because jlink fails with the error "jmods: Value too large for defined data type" error.
     # For JDK25, we need to have a proper test and validation process first cf https://github.com/jenkinsci/docker-agents/issues/1124)
     # Noting there isn't any JMODs shipped anymore since https://adoptium.net/en-GB/news/2025/08/eclipse-temurin-jdk24-JEP493-enabled
-    cp -r "/opt/jdk-${JAVA_VERSION}" /javaruntime; \
+    mv "${TEMP_JAVA_HOME}" /javaruntime; \
   else \
     case "$(jlink --version 2>&1 | cut -c1-2)" in \
       "21") options="--compress=zip-6 --add-modules ALL-MODULE-PATH" ;; \

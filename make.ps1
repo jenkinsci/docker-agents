@@ -4,7 +4,7 @@ Param(
     # Default make.ps1 target
     [String] $Target = 'build',
     # Remoting version to include
-    [String] $RemotingVersion = '3384.v60d89463d9e0',
+    [String] $RemotingVersion = '3385.vf1123fb_515da_',
     # Type of agent ("agent" or "inbound-agent")
     [String] $AgentType = '',
     # Windows flavor and windows version to build
@@ -15,6 +15,8 @@ Param(
     [switch] $OverwriteDockerComposeFile = $false,
     # Print the build and publish command instead of executing them if set
     [switch] $DryRun = $false,
+    # Pester version to install and use for tests
+    [String] $PesterVersion = '5.3.3',
     # Output debug info for tests: 'empty' (no additional test output), 'debug' (test cmd & stderr outputed), 'verbose' (test cmd, stderr, stdout outputed)
     [String] $TestsDebug = ''
 )
@@ -153,7 +155,7 @@ function Initialize-DockerComposeFile {
     # - Use docker buildx bake to output image definitions from the "<windowsFlavor>" bake target
     # - Convert with yq to the format expected by docker compose
     # - Store the result in the docker compose file
-    docker buildx bake --progress=quiet --file=docker-bake.hcl --file docker-bake.override.json $windowsFlavor --print |
+    docker buildx bake --progress=quiet --file=docker-bake.hcl $windowsFlavor --print |
         yq --prettyPrint $yqMainQuery |
         yq $yqServicesQuery |
         Out-File -FilePath $DockerComposeFile
@@ -208,10 +210,10 @@ foreach($agentType in $AgentTypes) {
         } else {
             Write-Host '= TEST: Starting test harness'
 
-            $mod = Get-InstalledModule -Name Pester -MinimumVersion 5.3.0 -MaximumVersion 5.3.3 -ErrorAction SilentlyContinue
+            $mod = Get-InstalledModule -Name Pester -RequiredVersion $PesterVersion -ErrorAction SilentlyContinue
             if ($null -eq $mod) {
-                Write-Host '= TEST: Pester 5.3.x not found: installing...'
-                Install-Module -Force -Name Pester -MaximumVersion 5.3.3 -Scope CurrentUser
+                Write-Host "= TEST: Pester $PesterVersion not found: installing..."
+                Install-Module -Force -Name Pester -RequiredVersion $PesterVersion -Scope CurrentUser
             }
 
             Import-Module Pester

@@ -1,0 +1,57 @@
+name: Bump `pwsh` version
+
+scms:
+  default:
+    kind: github
+    spec:
+      user: "{{ .github.user }}"
+      email: "{{ .github.email }}"
+      owner: "{{ .github.owner }}"
+      repository: "{{ .github.repository }}"
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+      branch: "{{ .github.branch }}"
+
+sources:
+  lastVersion:
+    kind: githubrelease
+    name: Get latest `pwsh` version
+    spec:
+      owner: PowerShell
+      repository: PowerShell
+      token: "{{ requiredEnv .github.token }}"
+      username: "{{ .github.username }}"
+    transformers:
+      - trimprefix: "v"
+
+targets:
+  setPwshVersionNanoserver:
+    name: Update `pwsh` version in nanoserver Dockerfile
+    kind: dockerfile
+    spec:
+      file: windows/nanoserver/Dockerfile
+      instruction:
+        keyword: ARG
+        matcher: PWSH_VERSION
+    scmid: default
+  setPwshVersionWindowsTests:
+    name: Update `pwsh` version in Windows tests
+    kind: file
+    spec:
+      file: tests/agent.Tests.ps1
+      matchpattern: >
+        global:PWSHVERSION =(.*)
+      replacepattern: >
+        global:PWSHVERSION = '{{ source "lastVersion" }}'
+    scmid: default
+
+actions:
+  default:
+    kind: github/pullrequest
+    title: Bump `pwsh` version to {{ source "lastVersion" }}
+    scmid: default
+    spec:
+      labels:
+        - enhancement
+        - pwsh
+        - nanoserver
