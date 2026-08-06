@@ -30,19 +30,19 @@ ARG TARGETPLATFORM
 
 ARG JAVA_RELEASE
 COPY ./adoptium/jdk_installers.txt /tmp/jdk_installers.txt
-ARG temp_Java_Home=/opt/jdk
-ENV PATH="${temp_Java_Home}/bin:${PATH}"
+ARG TEMP_JAVA_HOME=/opt/jdk
+ENV PATH="${TEMP_JAVA_HOME}/bin:${PATH}"
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
     ca-certificates \
     curl \
     tar \
   && java_zip_url="$(grep "jdk${JAVA_RELEASE}/${TARGETPLATFORM}/musl" /tmp/jdk_installers.txt | cut -d' ' -f2)" \
-  && mkdir -p "${temp_Java_Home}" \
-  && jdkArchive="/opt/jdk.zip" \
-  && curl --silent --show-error --location --output "${jdkArchive}" "${java_zip_url}" \
+  && mkdir -p "${TEMP_JAVA_HOME}" \
+  && jdk_archive="/opt/jdk.zip" \
+  && curl --silent --show-error --location --output "${jdk_archive}" "${java_zip_url}" \
   # TODO: Verify download with GPG
-  && tar xzf "${jdkArchive}" --strip-components=1 -C "${temp_Java_Home}" \
+  && tar xzf "${jdk_archive}" --strip-components=1 -C "${TEMP_JAVA_HOME}" \
   && java --version \
   && jlink --version
 
@@ -54,7 +54,7 @@ RUN java_major_version="$(jlink --version 2>&1 | cut -c1-2)"; \
     # because jlink fails with the error "jmods: Value too large for defined data type" error.
     # For JDK25, we need to have a proper test and validation process first cf https://github.com/jenkinsci/docker-agents/issues/1124)
     # Noting there isn't any JMODs shipped anymore since https://adoptium.net/en-GB/news/2025/08/eclipse-temurin-jdk24-JEP493-enabled
-    mv "${temp_Java_Home}" /javaruntime; \
+    mv "${TEMP_JAVA_HOME}" /javaruntime; \
   else \
     case "$(jlink --version 2>&1 | cut -c1-2)" in \
       "21") options="--compress=zip-6 --add-modules ALL-MODULE-PATH" ;; \
