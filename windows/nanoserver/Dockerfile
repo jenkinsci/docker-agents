@@ -40,7 +40,7 @@ RUN $jdkTemp = 'C:\jdktemp' ; `
     $expandedDir = Get-ChildItem -Path $jdkTemp -Directory | Where-Object { $_.Name -like 'jdk*' } ; `
     Move-Item -Path $expandedDir.FullName -Destination $env:JAVA_HOME -Force
 
-ARG PWSH_VERSION=7.3.9
+ARG PWSH_VERSION=7.6.4
 RUN $zip = Join-Path $env:TEMP "pwsh.zip" ; `
     $dest = 'C:\pwsh' ; `
     $url = 'https://github.com/PowerShell/PowerShell/releases/download/v{0}/PowerShell-{0}-win-x64.zip' -f $env:PWSH_VERSION ; `
