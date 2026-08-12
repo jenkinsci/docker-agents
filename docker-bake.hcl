@@ -15,7 +15,7 @@ variable "jdks_in_preview" {
 }
 
 variable "REMOTING_VERSION" {
-  default = "3385.vf1123fb_515da_"
+  default = "3386.v353e57a_1b_ea_0"
 }
 
 variable "REGISTRY" {
@@ -133,9 +133,9 @@ target "nanoserver" {
   dockerfile = "windows/nanoserver/Dockerfile"
   context    = "."
   args = {
-    VERSION               = REMOTING_VERSION
-    WINDOWS_VERSION_TAG   = windows_version
-    JAVA_RELEASE          = jdk
+    VERSION             = REMOTING_VERSION
+    WINDOWS_VERSION_TAG = windows_version
+    JAVA_RELEASE        = jdk
   }
   target    = type
   tags      = windows_tags(type, jdk, "nanoserver-${windows_version}")
@@ -152,9 +152,9 @@ target "windowsservercore" {
   dockerfile = "windows/windowsservercore/Dockerfile"
   context    = "."
   args = {
-    JAVA_RELEASE          = jdk
-    VERSION               = REMOTING_VERSION
-    WINDOWS_VERSION_TAG   = windows_version
+    JAVA_RELEASE        = jdk
+    VERSION             = REMOTING_VERSION
+    WINDOWS_VERSION_TAG = windows_version
   }
   target    = type
   tags      = windows_tags(type, jdk, "windowsservercore-${windows_version}")
