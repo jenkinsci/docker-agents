@@ -45,7 +45,7 @@ targets:
     {{- $adoptiumOS := index (splitList "/" $platform) 0 }}
     {{- $adoptiumCPU := index (splitList "/" $platform) 1 }}
     {{- $dockerCPU := ( eq $adoptiumCPU "x64" | ternary "amd64" ( eq $adoptiumCPU "aarch64" | ternary "arm64" $adoptiumCPU )) }}
-    {{- $prefix := "windows/amd64" }}
+    {{- $prefix := printf "jdk%d/%s/%s" $jdkRelease "windows" "amd64" }}
     {{- if ne $adoptiumOS "windows" }}
       {{- $prefix = printf "jdk%d/linux/%s/%s" $jdkRelease $dockerCPU (eq $adoptiumOS "alpine-linux" | ternary "musl" "glibc" )}}
     {{- end }}
