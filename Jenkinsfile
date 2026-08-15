@@ -48,6 +48,9 @@ if (env.TAG_NAME) {
     }
 }
 
+// Specify java release(s) to build for Windows images
+def windowsJavaReleases = [21, 25]
+
 // Specify parallel stages
 // Linux: bake group(s) or target(s), see 'make list' or 'make listgroup-linux' output
 // Note: splitting Alpine and Debian targets to avoid 429 rate limit errors from Docker Hub
@@ -106,7 +109,11 @@ def parallelStages = [failFast: false]
                                     sh 'make "build-${IMAGE_TYPE}"'
                                 } else {
                                     // No multiarch Windows images
-                                    powershell './make.ps1 build'
+                                    windowsJavaReleases.each { javaRelease ->
+                                        withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
+                                            powershell './make.ps1 build -ImageType ${env:IMAGE_TYPE} -OverwriteDockerComposeFile'
+                                        }
+                                    }
                                 }
                             }
 
@@ -114,7 +121,11 @@ def parallelStages = [failFast: false]
                                 if (isUnix()) {
                                     sh 'make "test-${IMAGE_TYPE}"'
                                 } else {
-                                    powershell './make.ps1 test'
+                                    windowsJavaReleases.each { javaRelease ->
+                                        withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
+                                            powershell './make.ps1 test -ImageType ${env:IMAGE_TYPE} -OverwriteDockerComposeFile'
+                                        }
+                                    }
                                 }
                                 junit 'target/**/junit-results*.xml'
                             }
@@ -128,7 +139,11 @@ def parallelStages = [failFast: false]
                                 sh 'make "multiarchbuild-${IMAGE_TYPE}"'
                             } else {
                                 // No multiarch images for Windows, (re)building them here on both controllers
-                                powershell './make.ps1 build'
+                                windowsJavaReleases.each { javaRelease ->
+                                    withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
+                                        powershell './make.ps1 build -ImageType ${env:IMAGE_TYPE} -OverwriteDockerComposeFile'
+                                    }
+                                }
                             }
                             archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
                         }
@@ -149,7 +164,11 @@ def parallelStages = [failFast: false]
                                             sh 'make listgroup-linux | xargs -I {} make "publish-{}"'
                                         }
                                     } else {
-                                        powershell './make.ps1 publish'
+                                        windowsJavaReleases.each { javaRelease ->
+                                            withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
+                                                powershell './make.ps1 publish -ImageType ${env:IMAGE_TYPE} -OverwriteDockerComposeFile'
+                                            }
+                                        }
                                     }
                                 }
                                 archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true

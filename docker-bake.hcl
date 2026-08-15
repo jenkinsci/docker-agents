@@ -68,11 +68,16 @@ variable "WINDOWS_AGENT_TYPE_OVERRIDE" {
   default = ""
 }
 
+# Set this value to a specific version to override java release to build
+variable "JAVA_RELEASE_OVERRIDE" {
+  default = ""
+}
+
 ## Targets
 target "alpine" {
   matrix = {
     type          = agent_types_to_build
-    java_release  = java_releases_to_build
+    java_release  = java_releases(JAVA_RELEASE_OVERRIDE)
   }
   name       = "${type}_alpine_jdk${java_release}"
   target     = type
@@ -90,7 +95,7 @@ target "alpine" {
 target "debian" {
   matrix = {
     type          = agent_types_to_build
-    java_release  = java_releases_to_build
+    java_release  = java_releases(JAVA_RELEASE_OVERRIDE)
   }
   name       = "${type}_debian_jdk${java_release}"
   target     = type
@@ -108,7 +113,7 @@ target "debian" {
 target "rhel_ubi9" {
   matrix = {
     type          = agent_types_to_build
-    java_release  = java_releases_to_build
+    java_release  = java_releases(JAVA_RELEASE_OVERRIDE)
   }
   name       = "${type}_rhel_ubi9_jdk${java_release}"
   target     = type
@@ -126,7 +131,7 @@ target "rhel_ubi9" {
 target "nanoserver" {
   matrix = {
     type            = windowsagenttypes(WINDOWS_AGENT_TYPE_OVERRIDE)
-    java_release    = java_releases_to_build
+    java_release    = java_releases(JAVA_RELEASE_OVERRIDE)
     windows_version = windowsversions("nanoserver")
   }
   name       = "${type}_nanoserver-${windows_version}_jdk${java_release}"
@@ -145,7 +150,7 @@ target "nanoserver" {
 target "windowsservercore" {
   matrix = {
     type            = windowsagenttypes(WINDOWS_AGENT_TYPE_OVERRIDE)
-    java_release    = java_releases_to_build
+    java_release    = java_releases(JAVA_RELEASE_OVERRIDE)
     windows_version = windowsversions("windowsservercore")
   }
   name       = "${type}_windowsservercore-${windows_version}_jdk${java_release}"
@@ -195,6 +200,15 @@ function "orgrepo" {
 function "is_default_java_release" {
   params = [java_release]
   result = equal(default_java_release, java_release) ? true : false
+}
+
+# Return array of java releases to build
+# Can be overriden to a specific version
+function "java_releases" {
+  params = [override]
+  result = (notequal(override, "")
+    ? [override]
+  : java_releases_to_build)
 }
 
 ## Specific functions
