@@ -66,28 +66,28 @@ agent_debian_jdk21
 agent_debian_jdk25
 agent_nanoserver-ltsc2022_jdk21
 agent_nanoserver-ltsc2022_jdk25
-agent_nanoserver-ltsc2022_jdk21
-agent_nanoserver-ltsc2022_jdk25
+agent_nanoserver-ltsc2025_jdk21
+agent_nanoserver-ltsc2025_jdk25
 agent_rhel_ubi9_jdk21
 agent_rhel_ubi9_jdk25
 agent_windowsservercore-ltsc2022_jdk21
 agent_windowsservercore-ltsc2022_jdk25
-agent_windowsservercore-ltsc2022_jdk21
-agent_windowsservercore-ltsc2022_jdk25
+agent_windowsservercore-ltsc2025_jdk21
+agent_windowsservercore-ltsc2025_jdk25
 inbound-agent_alpine_jdk21
 inbound-agent_alpine_jdk25
 inbound-agent_debian_jdk21
 inbound-agent_debian_jdk25
 inbound-agent_nanoserver-ltsc2022_jdk21
 inbound-agent_nanoserver-ltsc2022_jdk25
-inbound-agent_nanoserver-ltsc2022_jdk21
-inbound-agent_nanoserver-ltsc2022_jdk25
+inbound-agent_nanoserver-ltsc2025_jdk21
+inbound-agent_nanoserver-ltsc2025_jdk25
 inbound-agent_rhel_ubi9_jdk21
 inbound-agent_rhel_ubi9_jdk25
 inbound-agent_windowsservercore-ltsc2022_jdk21
 inbound-agent_windowsservercore-ltsc2022_jdk25
-inbound-agent_windowsservercore-ltsc2022_jdk21
-inbound-agent_windowsservercore-ltsc2022_jdk25
+inbound-agent_windowsservercore-ltsc2025_jdk21
+inbound-agent_windowsservercore-ltsc2025_jdk25
 ```
 
 You can see and use other targets by setting `OS` and/or `ARCH`:
@@ -104,20 +104,20 @@ $ OS=windows ARCH=amd64 make list
 + jq
 agent_nanoserver-ltsc2022_jdk21
 agent_nanoserver-ltsc2022_jdk25
-agent_nanoserver-ltsc2022_jdk21
-agent_nanoserver-ltsc2022_jdk25
+agent_nanoserver-ltsc2025_jdk21
+agent_nanoserver-ltsc2025_jdk25
 agent_windowsservercore-ltsc2022_jdk21
 agent_windowsservercore-ltsc2022_jdk25
-agent_windowsservercore-ltsc2022_jdk21
-agent_windowsservercore-ltsc2022_jdk25
+agent_windowsservercore-ltsc2025_jdk21
+agent_windowsservercore-ltsc2025_jdk25
 inbound-agent_nanoserver-ltsc2022_jdk21
 inbound-agent_nanoserver-ltsc2022_jdk25
-inbound-agent_nanoserver-ltsc2022_jdk21
-inbound-agent_nanoserver-ltsc2022_jdk25
+inbound-agent_nanoserver-ltsc2025_jdk21
+inbound-agent_nanoserver-ltsc2025_jdk25
 inbound-agent_windowsservercore-ltsc2022_jdk21
 inbound-agent_windowsservercore-ltsc2022_jdk25
-inbound-agent_windowsservercore-ltsc2022_jdk21
-inbound-agent_windowsservercore-ltsc2022_jdk25
+inbound-agent_windowsservercore-ltsc2025_jdk21
+inbound-agent_windowsservercore-ltsc2025_jdk25
 ```
 
 #### Building a specific image
@@ -254,116 +254,190 @@ $ ON_TAG=true BUILD_NUMBER=3 make tags
 <details><summary>Output</summary>
 
 ```
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-alpine-jdk21 (agent_alpine_jdk21)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-alpine-jdk25 (agent_alpine_jdk25)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-alpine3.24-jdk21 (agent_alpine_jdk21)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-alpine3.24-jdk25 (agent_alpine_jdk25)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-jdk21 (agent_debian_jdk21)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-jdk21-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk21)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-jdk21-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk21)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-jdk21-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk21)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-jdk21-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk21)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-jdk25 (agent_debian_jdk25)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-jdk25-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk25)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-jdk25-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk25)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-jdk25-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk25)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-jdk25-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk25)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-rhel-ubi9-jdk21 (agent_rhel_ubi9_jdk21)
-docker.io/hlemeur/agent:3355.v388858a_47b_33-3-rhel-ubi9-jdk25 (agent_rhel_ubi9_jdk25)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3 (agent_debian_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-alpine (agent_alpine_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-alpine-jdk21 (agent_alpine_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-alpine-jdk25 (agent_alpine_jdk25)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-alpine3.24 (agent_alpine_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-alpine3.24-jdk21 (agent_alpine_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-alpine3.24-jdk25 (agent_alpine_jdk25)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk21 (agent_debian_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk21-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk21-nanoserver-ltsc2025 (agent_nanoserver-ltsc2025_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk21-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk21-windowsservercore-ltsc2025 (agent_windowsservercore-ltsc2025_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk25 (agent_debian_jdk25)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk25-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk25)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk25-nanoserver-ltsc2025 (agent_nanoserver-ltsc2025_jdk25)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk25-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk25)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk25-windowsservercore-ltsc2025 (agent_windowsservercore-ltsc2025_jdk25)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-nanoserver-ltsc2025 (agent_nanoserver-ltsc2025_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-rhel-ubi9 (agent_rhel_ubi9_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-rhel-ubi9-jdk21 (agent_rhel_ubi9_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-rhel-ubi9-jdk25 (agent_rhel_ubi9_jdk25)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-windowsservercore-ltsc2025 (agent_windowsservercore-ltsc2025_jdk21)
+docker.io/hlemeur/agent:alpine (agent_alpine_jdk21)
 docker.io/hlemeur/agent:alpine-jdk21 (agent_alpine_jdk21)
 docker.io/hlemeur/agent:alpine-jdk25 (agent_alpine_jdk25)
+docker.io/hlemeur/agent:alpine3.24 (agent_alpine_jdk21)
 docker.io/hlemeur/agent:alpine3.24-jdk21 (agent_alpine_jdk21)
 docker.io/hlemeur/agent:alpine3.24-jdk25 (agent_alpine_jdk25)
 docker.io/hlemeur/agent:jdk21 (agent_debian_jdk21)
 docker.io/hlemeur/agent:jdk21-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk21)
-docker.io/hlemeur/agent:jdk21-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/agent:jdk21-nanoserver-ltsc2025 (agent_nanoserver-ltsc2025_jdk21)
 docker.io/hlemeur/agent:jdk21-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk21)
-docker.io/hlemeur/agent:jdk21-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/agent:jdk21-windowsservercore-ltsc2025 (agent_windowsservercore-ltsc2025_jdk21)
 docker.io/hlemeur/agent:jdk25 (agent_debian_jdk25)
 docker.io/hlemeur/agent:jdk25-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk25)
-docker.io/hlemeur/agent:jdk25-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk25)
+docker.io/hlemeur/agent:jdk25-nanoserver-ltsc2025 (agent_nanoserver-ltsc2025_jdk25)
 docker.io/hlemeur/agent:jdk25-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk25)
-docker.io/hlemeur/agent:jdk25-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk25)
+docker.io/hlemeur/agent:jdk25-windowsservercore-ltsc2025 (agent_windowsservercore-ltsc2025_jdk25)
+docker.io/hlemeur/agent:latest (agent_debian_jdk21)
+docker.io/hlemeur/agent:latest-alpine (agent_alpine_jdk21)
 docker.io/hlemeur/agent:latest-alpine-jdk21 (agent_alpine_jdk21)
 docker.io/hlemeur/agent:latest-alpine-jdk25 (agent_alpine_jdk25)
+docker.io/hlemeur/agent:latest-alpine3.24 (agent_alpine_jdk21)
 docker.io/hlemeur/agent:latest-alpine3.24-jdk21 (agent_alpine_jdk21)
 docker.io/hlemeur/agent:latest-alpine3.24-jdk25 (agent_alpine_jdk25)
 docker.io/hlemeur/agent:latest-jdk21 (agent_debian_jdk21)
 docker.io/hlemeur/agent:latest-jdk25 (agent_debian_jdk25)
+docker.io/hlemeur/agent:latest-rhel-ubi9 (agent_rhel_ubi9_jdk21)
 docker.io/hlemeur/agent:latest-rhel-ubi9-jdk21 (agent_rhel_ubi9_jdk21)
 docker.io/hlemeur/agent:latest-rhel-ubi9-jdk25 (agent_rhel_ubi9_jdk25)
+docker.io/hlemeur/agent:latest-trixie (agent_debian_jdk21)
 docker.io/hlemeur/agent:latest-trixie-jdk21 (agent_debian_jdk21)
 docker.io/hlemeur/agent:latest-trixie-jdk25 (agent_debian_jdk25)
+docker.io/hlemeur/agent:nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/agent:nanoserver-ltsc2025 (agent_nanoserver-ltsc2025_jdk21)
+docker.io/hlemeur/agent:rhel-ubi9 (agent_rhel_ubi9_jdk21)
 docker.io/hlemeur/agent:rhel-ubi9-jdk21 (agent_rhel_ubi9_jdk21)
 docker.io/hlemeur/agent:rhel-ubi9-jdk25 (agent_rhel_ubi9_jdk25)
+docker.io/hlemeur/agent:trixie (agent_debian_jdk21)
 docker.io/hlemeur/agent:trixie-jdk21 (agent_debian_jdk21)
 docker.io/hlemeur/agent:trixie-jdk25 (agent_debian_jdk25)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-alpine-jdk21 (inbound-agent_alpine_jdk21)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-alpine-jdk25 (inbound-agent_alpine_jdk25)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-alpine3.24-jdk21 (inbound-agent_alpine_jdk21)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-alpine3.24-jdk25 (inbound-agent_alpine_jdk25)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-jdk21 (inbound-agent_debian_jdk21)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-jdk21-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk21)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-jdk21-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk21)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-jdk21-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk21)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-jdk21-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk21)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-jdk25 (inbound-agent_debian_jdk25)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-jdk25-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk25)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-jdk25-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk25)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-jdk25-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk25)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-jdk25-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk25)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-rhel-ubi9-jdk21 (inbound-agent_rhel_ubi9_jdk21)
-docker.io/hlemeur/inbound-agent:3355.v388858a_47b_33-3-rhel-ubi9-jdk25 (inbound-agent_rhel_ubi9_jdk25)
+docker.io/hlemeur/agent:windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/agent:windowsservercore-ltsc2025 (agent_windowsservercore-ltsc2025_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3 (inbound-agent_debian_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-alpine (inbound-agent_alpine_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-alpine-jdk21 (inbound-agent_alpine_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-alpine-jdk25 (inbound-agent_alpine_jdk25)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-alpine3.24 (inbound-agent_alpine_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-alpine3.24-jdk21 (inbound-agent_alpine_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-alpine3.24-jdk25 (inbound-agent_alpine_jdk25)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk21 (inbound-agent_debian_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk21-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk21-nanoserver-ltsc2025 (inbound-agent_nanoserver-ltsc2025_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk21-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk21-windowsservercore-ltsc2025 (inbound-agent_windowsservercore-ltsc2025_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk25 (inbound-agent_debian_jdk25)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk25-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk25)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk25-nanoserver-ltsc2025 (inbound-agent_nanoserver-ltsc2025_jdk25)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk25-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk25)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk25-windowsservercore-ltsc2025 (inbound-agent_windowsservercore-ltsc2025_jdk25)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-nanoserver-ltsc2025 (inbound-agent_nanoserver-ltsc2025_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-rhel-ubi9 (inbound-agent_rhel_ubi9_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-rhel-ubi9-jdk21 (inbound-agent_rhel_ubi9_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-rhel-ubi9-jdk25 (inbound-agent_rhel_ubi9_jdk25)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-windowsservercore-ltsc2025 (inbound-agent_windowsservercore-ltsc2025_jdk21)
+docker.io/hlemeur/inbound-agent:alpine (inbound-agent_alpine_jdk21)
 docker.io/hlemeur/inbound-agent:alpine-jdk21 (inbound-agent_alpine_jdk21)
 docker.io/hlemeur/inbound-agent:alpine-jdk25 (inbound-agent_alpine_jdk25)
+docker.io/hlemeur/inbound-agent:alpine3.24 (inbound-agent_alpine_jdk21)
 docker.io/hlemeur/inbound-agent:alpine3.24-jdk21 (inbound-agent_alpine_jdk21)
 docker.io/hlemeur/inbound-agent:alpine3.24-jdk25 (inbound-agent_alpine_jdk25)
 docker.io/hlemeur/inbound-agent:jdk21 (inbound-agent_debian_jdk21)
 docker.io/hlemeur/inbound-agent:jdk21-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk21)
-docker.io/hlemeur/inbound-agent:jdk21-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:jdk21-nanoserver-ltsc2025 (inbound-agent_nanoserver-ltsc2025_jdk21)
 docker.io/hlemeur/inbound-agent:jdk21-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk21)
-docker.io/hlemeur/inbound-agent:jdk21-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:jdk21-windowsservercore-ltsc2025 (inbound-agent_windowsservercore-ltsc2025_jdk21)
 docker.io/hlemeur/inbound-agent:jdk25 (inbound-agent_debian_jdk25)
 docker.io/hlemeur/inbound-agent:jdk25-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk25)
-docker.io/hlemeur/inbound-agent:jdk25-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk25)
+docker.io/hlemeur/inbound-agent:jdk25-nanoserver-ltsc2025 (inbound-agent_nanoserver-ltsc2025_jdk25)
 docker.io/hlemeur/inbound-agent:jdk25-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk25)
-docker.io/hlemeur/inbound-agent:jdk25-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk25)
+docker.io/hlemeur/inbound-agent:jdk25-windowsservercore-ltsc2025 (inbound-agent_windowsservercore-ltsc2025_jdk25)
+docker.io/hlemeur/inbound-agent:latest (inbound-agent_debian_jdk21)
+docker.io/hlemeur/inbound-agent:latest-alpine (inbound-agent_alpine_jdk21)
 docker.io/hlemeur/inbound-agent:latest-alpine-jdk21 (inbound-agent_alpine_jdk21)
 docker.io/hlemeur/inbound-agent:latest-alpine-jdk25 (inbound-agent_alpine_jdk25)
+docker.io/hlemeur/inbound-agent:latest-alpine3.24 (inbound-agent_alpine_jdk21)
 docker.io/hlemeur/inbound-agent:latest-alpine3.24-jdk21 (inbound-agent_alpine_jdk21)
 docker.io/hlemeur/inbound-agent:latest-alpine3.24-jdk25 (inbound-agent_alpine_jdk25)
 docker.io/hlemeur/inbound-agent:latest-jdk21 (inbound-agent_debian_jdk21)
 docker.io/hlemeur/inbound-agent:latest-jdk25 (inbound-agent_debian_jdk25)
+docker.io/hlemeur/inbound-agent:latest-rhel-ubi9 (inbound-agent_rhel_ubi9_jdk21)
 docker.io/hlemeur/inbound-agent:latest-rhel-ubi9-jdk21 (inbound-agent_rhel_ubi9_jdk21)
 docker.io/hlemeur/inbound-agent:latest-rhel-ubi9-jdk25 (inbound-agent_rhel_ubi9_jdk25)
+docker.io/hlemeur/inbound-agent:latest-trixie (inbound-agent_debian_jdk21)
 docker.io/hlemeur/inbound-agent:latest-trixie-jdk21 (inbound-agent_debian_jdk21)
 docker.io/hlemeur/inbound-agent:latest-trixie-jdk25 (inbound-agent_debian_jdk25)
+docker.io/hlemeur/inbound-agent:nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:nanoserver-ltsc2025 (inbound-agent_nanoserver-ltsc2025_jdk21)
+docker.io/hlemeur/inbound-agent:rhel-ubi9 (inbound-agent_rhel_ubi9_jdk21)
 docker.io/hlemeur/inbound-agent:rhel-ubi9-jdk21 (inbound-agent_rhel_ubi9_jdk21)
 docker.io/hlemeur/inbound-agent:rhel-ubi9-jdk25 (inbound-agent_rhel_ubi9_jdk25)
+docker.io/hlemeur/inbound-agent:trixie (inbound-agent_debian_jdk21)
 docker.io/hlemeur/inbound-agent:trixie-jdk21 (inbound-agent_debian_jdk21)
 docker.io/hlemeur/inbound-agent:trixie-jdk25 (inbound-agent_debian_jdk25)
+docker.io/hlemeur/inbound-agent:windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:windowsservercore-ltsc2025 (inbound-agent_windowsservercore-ltsc2025_jdk21)
 ```
 
 </details>
 
 You can also call `make tags-windows` to show Windows image tags:
 ```
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk21-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk21-nanoserver-ltsc2025 (agent_nanoserver-ltsc2025_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk21-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk21-windowsservercore-ltsc2025 (agent_windowsservercore-ltsc2025_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk25-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk25)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk25-nanoserver-ltsc2025 (agent_nanoserver-ltsc2025_jdk25)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk25-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk25)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-jdk25-windowsservercore-ltsc2025 (agent_windowsservercore-ltsc2025_jdk25)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-nanoserver-ltsc2025 (agent_nanoserver-ltsc2025_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/agent:3386.v353e57a_1b_ea_0-3-windowsservercore-ltsc2025 (agent_windowsservercore-ltsc2025_jdk21)
 docker.io/hlemeur/agent:jdk21-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk21)
-docker.io/hlemeur/agent:jdk21-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/agent:jdk21-nanoserver-ltsc2025 (agent_nanoserver-ltsc2025_jdk21)
 docker.io/hlemeur/agent:jdk21-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk21)
-docker.io/hlemeur/agent:jdk21-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/agent:jdk21-windowsservercore-ltsc2025 (agent_windowsservercore-ltsc2025_jdk21)
 docker.io/hlemeur/agent:jdk25-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk25)
-docker.io/hlemeur/agent:jdk25-nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk25)
+docker.io/hlemeur/agent:jdk25-nanoserver-ltsc2025 (agent_nanoserver-ltsc2025_jdk25)
 docker.io/hlemeur/agent:jdk25-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk25)
-docker.io/hlemeur/agent:jdk25-windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk25)
+docker.io/hlemeur/agent:jdk25-windowsservercore-ltsc2025 (agent_windowsservercore-ltsc2025_jdk25)
+docker.io/hlemeur/agent:nanoserver-ltsc2022 (agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/agent:nanoserver-ltsc2025 (agent_nanoserver-ltsc2025_jdk21)
+docker.io/hlemeur/agent:windowsservercore-ltsc2022 (agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/agent:windowsservercore-ltsc2025 (agent_windowsservercore-ltsc2025_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk21-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk21-nanoserver-ltsc2025 (inbound-agent_nanoserver-ltsc2025_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk21-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk21-windowsservercore-ltsc2025 (inbound-agent_windowsservercore-ltsc2025_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk25-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk25)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk25-nanoserver-ltsc2025 (inbound-agent_nanoserver-ltsc2025_jdk25)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk25-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk25)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-jdk25-windowsservercore-ltsc2025 (inbound-agent_windowsservercore-ltsc2025_jdk25)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-nanoserver-ltsc2025 (inbound-agent_nanoserver-ltsc2025_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:3386.v353e57a_1b_ea_0-3-windowsservercore-ltsc2025 (inbound-agent_windowsservercore-ltsc2025_jdk21)
 docker.io/hlemeur/inbound-agent:jdk21-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk21)
-docker.io/hlemeur/inbound-agent:jdk21-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:jdk21-nanoserver-ltsc2025 (inbound-agent_nanoserver-ltsc2025_jdk21)
 docker.io/hlemeur/inbound-agent:jdk21-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk21)
-docker.io/hlemeur/inbound-agent:jdk21-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:jdk21-windowsservercore-ltsc2025 (inbound-agent_windowsservercore-ltsc2025_jdk21)
 docker.io/hlemeur/inbound-agent:jdk25-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk25)
-docker.io/hlemeur/inbound-agent:jdk25-nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk25)
+docker.io/hlemeur/inbound-agent:jdk25-nanoserver-ltsc2025 (inbound-agent_nanoserver-ltsc2025_jdk25)
 docker.io/hlemeur/inbound-agent:jdk25-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk25)
-docker.io/hlemeur/inbound-agent:jdk25-windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk25)
+docker.io/hlemeur/inbound-agent:jdk25-windowsservercore-ltsc2025 (inbound-agent_windowsservercore-ltsc2025_jdk25)
+docker.io/hlemeur/inbound-agent:nanoserver-ltsc2022 (inbound-agent_nanoserver-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:nanoserver-ltsc2025 (inbound-agent_nanoserver-ltsc2025_jdk21)
+docker.io/hlemeur/inbound-agent:windowsservercore-ltsc2022 (inbound-agent_windowsservercore-ltsc2022_jdk21)
+docker.io/hlemeur/inbound-agent:windowsservercore-ltsc2025 (inbound-agent_windowsservercore-ltsc2025_jdk21)
 ```
 
 ##### Target `bats`
@@ -468,7 +542,7 @@ Add the `-DryRun` parameter to print out any build, publish or tests commands in
 
 #### Building and testing a specific image
 
-You can build (and test) only one image type by setting `-ImageType` to a combination of Windows flavors ("nanoserver" & "windowsservercore") and Windows versions ("ltsc2022", "ltsc2022").
+You can build (and test) only one image type by setting `-ImageType` to a combination of Windows flavors ("nanoserver" & "windowsservercore") and Windows versions ("ltsc2022", "ltsc2025").
 
 Ex: `.\make.ps1 -ImageType 'nanoserver-ltsc2022'`
 
