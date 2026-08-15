@@ -1,6 +1,6 @@
 {{ $platforms := list "windows/x64" "alpine-linux/x64" "alpine-linux/aarch64" "linux/x64" "linux/aarch64" "linux/ppc64le" "linux/s390x" "linux/riscv64" }}
 # TODO: templatize into a single "jdks.yaml" and iterate over JDK values when https://github.com/updatecli/updatecli/issues/9821 is fixed
-{{ $jdkRelease := 21 }}
+{{ range $jdkRelease := list 21 25 }}
 ---
 name: Bump JDK{{ $jdkRelease }} version for all Linux images
 
@@ -8,13 +8,13 @@ scms:
   default:
     kind: github
     spec:
-      user: "{{ .github.user }}"
-      email: "{{ .github.email }}"
-      owner: "{{ .github.owner }}"
-      repository: "{{ .github.repository }}"
-      token: "{{ requiredEnv .github.token }}"
-      username: "{{ .github.username }}"
-      branch: "{{ .github.branch }}"
+      user: "{{ $.github.user }}"
+      email: "{{ $.github.email }}"
+      owner: "{{ $.github.owner }}"
+      repository: "{{ $.github.repository }}"
+      token: "{{ requiredEnv $.github.token }}"
+      username: "{{ $.github.username }}"
+      branch: "{{ $.github.branch }}"
 
 sources:
   latestJDKVersion:
@@ -24,9 +24,9 @@ sources:
       featureversion: {{ $jdkRelease }}
     transformers:
       - trimprefix: "jdk-"
-  {{- range $platform := $platforms }}
-    {{- $adoptiumOS := index (splitList "/" $platform) 0 }}
-    {{- $adoptiumCPU := index (splitList "/" $platform) 1 }}
+    {{- range $platform := $platforms }}
+      {{- $adoptiumOS := index (splitList "/" $platform) 0 }}
+      {{- $adoptiumCPU := index (splitList "/" $platform) 1 }}
   get_{{ $adoptiumOS }}_{{ $adoptiumCPU }}_installer_url:
     name: Retrieve the latest JDK {{ $jdkRelease }} Installer URL for {{ $adoptiumOS | title }} ({{ $adoptiumCPU }})
     kind: temurin
@@ -38,17 +38,17 @@ sources:
       specificversion: '{{ source "latestJDKVersion" }}'
       releasetype: ga
       result: installer_url
-  {{- end }}
+    {{- end }}
 
 targets:
-  {{- range $platform := $platforms }}
-    {{- $adoptiumOS := index (splitList "/" $platform) 0 }}
-    {{- $adoptiumCPU := index (splitList "/" $platform) 1 }}
-    {{- $dockerCPU := ( eq $adoptiumCPU "x64" | ternary "amd64" ( eq $adoptiumCPU "aarch64" | ternary "arm64" $adoptiumCPU )) }}
-    {{- $prefix := "windows/amd64" }}
-    {{- if ne $adoptiumOS "windows" }}
-      {{- $prefix = printf "jdk%d/linux/%s/%s" $jdkRelease $dockerCPU (eq $adoptiumOS "alpine-linux" | ternary "musl" "glibc" )}}
-    {{- end }}
+    {{- range $platform := $platforms }}
+      {{- $adoptiumOS := index (splitList "/" $platform) 0 }}
+      {{- $adoptiumCPU := index (splitList "/" $platform) 1 }}
+      {{- $dockerCPU := ( eq $adoptiumCPU "x64" | ternary "amd64" ( eq $adoptiumCPU "aarch64" | ternary "arm64" $adoptiumCPU )) }}
+      {{- $prefix := printf "jdk%d/%s/%s" $jdkRelease "windows" "amd64" }}
+      {{- if ne $adoptiumOS "windows" }}
+        {{- $prefix = printf "jdk%d/linux/%s/%s" $jdkRelease $dockerCPU (eq $adoptiumOS "alpine-linux" | ternary "musl" "glibc" )}}
+      {{- end }}
   set_{{ $adoptiumOS }}_{{ $adoptiumCPU }}:
     name: Bump JDK{{ $jdkRelease }} Installer URL for {{ title $adoptiumOS }} {{ $adoptiumCPU }}
     kind: file
@@ -58,8 +58,8 @@ targets:
     spec:
       file: adoptium/jdk_installers.txt
       matchpattern: '{{ $prefix }} (.*)'
-    # scmid: default
-  {{- end }}
+    scmid: default
+    {{- end }}
 
 actions:
   default:
@@ -70,3 +70,4 @@ actions:
       labels:
         - dependencies
         - jdk{{ $jdkRelease }}
+{{- end }}

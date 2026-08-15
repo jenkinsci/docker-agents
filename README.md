@@ -222,7 +222,7 @@ $ make show
       "dockerfile": "alpine/Dockerfile",
       "args": {
         "ALPINE_TAG": "3.24.1",
-        "VERSION": "3385.vf1123fb_515da_"
+        "VERSION": "3386.v353e57a_1b_ea_0"
       },
       "tags": [
         "docker.io/jenkins/agent:alpine",

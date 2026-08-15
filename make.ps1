@@ -4,7 +4,7 @@ Param(
     # Default make.ps1 target
     [String] $Target = 'build',
     # Remoting version to include
-    [String] $RemotingVersion = '3385.vf1123fb_515da_',
+    [String] $RemotingVersion = '3386.v353e57a_1b_ea_0',
     # Type of agent ("agent" or "inbound-agent")
     [String] $AgentType = '',
     # Windows flavor and windows version to build
@@ -16,7 +16,7 @@ Param(
     # Print the build and publish command instead of executing them if set
     [switch] $DryRun = $false,
     # Pester version to install and use for tests
-    [String] $PesterVersion = '5.3.3',
+    [String] $PesterVersion = '6.1.0',
     # Output debug info for tests: 'empty' (no additional test output), 'debug' (test cmd & stderr outputed), 'verbose' (test cmd, stderr, stdout outputed)
     [String] $TestsDebug = ''
 )

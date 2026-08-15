@@ -36,7 +36,7 @@ def agentSelector(String imageType, retryCounter) {
 
 // Defaul values
 def tagWithOneDashExist = false
-def remotingVersion = '3385.vf1123fb_515da_'
+def remotingVersion = '3386.v353e57a_1b_ea_0'
 def buildNumber = env.BUILD_NUMBER
 // Values on tag containing the remoting version and build number
 if (env.TAG_NAME) {
@@ -116,7 +116,7 @@ def parallelStages = [failFast: false]
                                 } else {
                                     powershell './make.ps1 test'
                                 }
-                                junit(allowEmptyResults: true, keepLongStdio: true, testResults: 'target/**/junit-results*.xml')
+                                junit 'target/**/junit-results*.xml'
                             }
                             archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
                         }

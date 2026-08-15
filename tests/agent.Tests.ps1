@@ -10,7 +10,7 @@ $GLOBAL:IMAGE_TAG = $imageItems[1]
 
 $items = $global:IMAGE_TAG.Split('-')
 # Remove the 'jdk' prefix
-$global:JAVAMAJORVERSION = $items[0].Remove(0,3)
+$global:JAVARELEASE = $items[0].Remove(0,3)
 $global:WINDOWSFLAVOR = $items[1]
 $global:WINDOWSVERSIONTAG = $items[2]
 
@@ -24,7 +24,7 @@ if ($global:WINDOWSFLAVOR -eq 'nanoserver') {
 }
 
 $global:GITLFSVERSION = '3.7.1'
-$global:PWSHVERSION = '7.3.9'
+$global:PWSHVERSION = '7.6.5'
 
 # # Uncomment to help debugging when working on this script
 # Write-Host "= DEBUG: global vars"
@@ -60,7 +60,7 @@ Describe "[$global:IMAGE_NAME] image has correct applications in the PATH" {
         $exitCode, $stdout, $stderr = Run-Program 'docker' "exec $global:CONTAINERNAME $global:CONTAINERSHELL -C `"if (`$null -eq (Get-Command java.exe -ErrorAction SilentlyContinue)) { exit -1 } else { exit 0 }`""
         $exitCode | Should -Be 0
         $exitCode, $stdout, $stderr = Run-Program 'docker' "exec $global:CONTAINERNAME $global:CONTAINERSHELL -C `"`$global:VERSION = java -version 2>&1 ; Write-Host `$global:VERSION`""
-        $stdout.Trim() | Should -Match "^openjdk version `"$global:JAVAMAJORVERSION"
+        $stdout.Trim() | Should -Match "^openjdk version `"$global:JAVARELEASE"
     }
 
     It 'has AGENT_WORKDIR in the environment' {
@@ -154,7 +154,7 @@ Describe "[$global:IMAGE_NAME] can be built with custom build arguments" {
     BeforeAll {
         Push-Location -StackName 'agent' -Path "$PSScriptRoot/.."
 
-        $exitCode, $stdout, $stderr = Run-Program 'docker' "build --target agent --build-arg `"VERSION=${global:TEST_VERSION}`" --build-arg `"JAVA_RELEASE=${global:JAVAMAJORVERSION}`" --build-arg `"WINDOWS_VERSION_TAG=${global:WINDOWSVERSIONTAG}`" --build-arg `"user=${global:TEST_USER}`" --build-arg `"AGENT_WORKDIR=${global:TEST_AGENT_WORKDIR}`" --tag ${global:IMAGE_NAME} --file ./windows/${global:WINDOWSFLAVOR}/Dockerfile ."
+        $exitCode, $stdout, $stderr = Run-Program 'docker' "build --target agent --build-arg `"VERSION=${global:TEST_VERSION}`" --build-arg `"JAVA_RELEASE=${global:JAVARELEASE}`" --build-arg `"WINDOWS_VERSION_TAG=${global:WINDOWSVERSIONTAG}`" --build-arg `"user=${global:TEST_USER}`" --build-arg `"AGENT_WORKDIR=${global:TEST_AGENT_WORKDIR}`" --tag ${global:IMAGE_NAME} --file ./windows/${global:WINDOWSFLAVOR}/Dockerfile ."
         $exitCode | Should -Be 0
 
         $exitCode, $stdout, $stderr = Run-Program 'docker' "run -d -it --name $global:CONTAINERNAME -P $global:IMAGE_NAME $global:CONTAINERSHELL"

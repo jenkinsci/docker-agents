@@ -151,7 +151,7 @@ publish-%: target show-%
 
 ## Define bats options based on environment
 # common flags for all tests
-bats_flags := --formatter pretty
+bats_flags :=
 # if DISABLE_PARALLEL_TESTS true, then disable parallel execution
 ifneq (true,$(DISABLE_PARALLEL_TESTS))
 # If the GNU 'parallel' command line is absent, then disable parallel execution
@@ -189,15 +189,15 @@ _test-group:
 _test-image:
 	@echo "Testing $(TARGET)"
 # Show bats version
-	@set -x; bats/bin/bats --version
+	@bats/bin/bats --version
 # Each type of image ("agent" or "inbound-agent") has its own tests suite
 ifeq ($(CI), true)
 # Execute the test harness and write result to a TAP file
-	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --report-formatter junit --output target/ | tee target/junit-results-$(TARGET).xml
+	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --report-formatter junit --output target/
 	mv target/report.xml target/junit-results-$(TARGET).xml
 else
 # Execute the test harness
-	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --timing
+	IMAGE=$(TARGET) bats/bin/bats $(CURDIR)/tests/tests_$(shell echo $(TARGET) |  cut -d "_" -f 1).bats $(bats_flags) --formatter pretty --timing
 endif
 
 # Test all targets depending on the current OS and architecture

@@ -10,7 +10,7 @@ $GLOBAL:IMAGE_TAG = $imageItems[1]
 
 $items = $global:IMAGE_TAG.Split('-')
 # Remove the 'jdk' prefix (3 first characters)
-$global:JAVAMAJORVERSION = $items[0].Remove(0,3)
+$global:JAVARELEASE = $items[0].Remove(0,3)
 $global:WINDOWSFLAVOR = $items[1]
 $global:WINDOWSVERSIONTAG = $items[2]
 
@@ -35,7 +35,7 @@ CleanupNetwork('jnlp-network')
 
 Describe "[$global:IMAGE_NAME] build image" {
     It 'builds image' {
-        $exitCode, $stdout, $stderr = Run-Program 'docker' "build --build-arg `"VERSION=${global:VERSION}`" --build-arg `"JAVA_RELEASE=${global:JAVAMAJORVERSION}`" --build-arg `"WINDOWS_VERSION_TAG=${global:WINDOWSVERSIONTAG}`" --tag=${global:IMAGE_TAG} --file ./windows/${global:WINDOWSFLAVOR}/Dockerfile ."
+        $exitCode, $stdout, $stderr = Run-Program 'docker' "build --build-arg `"VERSION=${global:VERSION}`" --build-arg `"JAVA_RELEASE=${global:JAVARELEASE}`" --build-arg `"WINDOWS_VERSION_TAG=${global:WINDOWSVERSIONTAG}`" --tag=${global:IMAGE_TAG} --file ./windows/${global:WINDOWSFLAVOR}/Dockerfile ."
         $exitCode | Should -Be 0
     }
 }
@@ -117,7 +117,7 @@ Describe "[$global:IMAGE_NAME] custom build args" {
     }
 
     It 'builds image with arguments' {
-        $exitCode, $stdout, $stderr = Run-Program 'docker' "build --build-arg `"VERSION=${TEST_VERSION}`" --build-arg `"JAVA_RELEASE=${global:JAVAMAJORVERSION}`" --build-arg `"WINDOWS_VERSION_TAG=${global:WINDOWSVERSIONTAG}`" --build-arg WINDOWS_FLAVOR=${global:WINDOWSFLAVOR} --build-arg CONTAINER_SHELL=${global:CONTAINERSHELL} --tag=${customImageName} --file=./windows/${global:WINDOWSFLAVOR}/Dockerfile ."
+        $exitCode, $stdout, $stderr = Run-Program 'docker' "build --build-arg `"VERSION=${TEST_VERSION}`" --build-arg `"JAVA_RELEASE=${global:JAVARELEASE}`" --build-arg `"WINDOWS_VERSION_TAG=${global:WINDOWSVERSIONTAG}`" --build-arg WINDOWS_FLAVOR=${global:WINDOWSFLAVOR} --build-arg CONTAINER_SHELL=${global:CONTAINERSHELL} --tag=${customImageName} --file=./windows/${global:WINDOWSFLAVOR}/Dockerfile ."
         $exitCode | Should -Be 0
 
         $exitCode, $stdout, $stderr = Run-Program 'docker' "run --detach --tty --name $global:CONTAINERNAME $customImageName -Cmd $global:CONTAINERSHELL"
@@ -138,7 +138,7 @@ Describe "[$global:IMAGE_NAME] custom build args" {
 }
 
 Describe "[$global:IMAGE_NAME] passing JVM options (slow test)" {
-    It "shows the java version ${global:JAVAMAJORVERSION} with --show-version" {
+    It "shows the java version ${global:JAVARELEASE} with --show-version" {
         $exitCode, $stdout, $stderr = Run-Program 'docker' 'network create --driver nat jnlp-network'
         Start-NcatContainer -windowsVersionTag $global:WINDOWSVERSIONTAG -networkName 'jnlp-network'
 
@@ -154,7 +154,7 @@ Describe "[$global:IMAGE_NAME] passing JVM options (slow test)" {
         Start-Sleep -Seconds 20
         $exitCode, $stdout, $stderr = Run-Program 'docker' "logs $global:CONTAINERNAME"
         $exitCode | Should -Be 0
-        $stdout | Should -Match "OpenJDK Runtime Environment Temurin-${global:JAVAMAJORVERSION}"
+        $stdout | Should -Match "OpenJDK Runtime Environment Temurin-${global:JAVARELEASE}"
     }
 
     AfterAll {
