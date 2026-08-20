@@ -107,7 +107,7 @@ def parallelStages = [failFast: false]
                                     // No multiarch Windows images
                                     windowsJavaReleases.each { javaRelease ->
                                         withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
-                                            powershell './make.ps1 build -ImageType ${env:IMAGE_TYPE} -OverwriteDockerComposeFile'
+                                            powershell './make.ps1 build -ImageType ${env:IMAGE_TYPE}'
                                         }
                                     }
                                 }
@@ -119,7 +119,7 @@ def parallelStages = [failFast: false]
                                 } else {
                                     windowsJavaReleases.each { javaRelease ->
                                         withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
-                                            powershell './make.ps1 test -ImageType ${env:IMAGE_TYPE} -OverwriteDockerComposeFile'
+                                            powershell './make.ps1 test -ImageType ${env:IMAGE_TYPE}'
                                         }
                                     }
                                 }
@@ -137,7 +137,7 @@ def parallelStages = [failFast: false]
                                 // No multiarch images for Windows, (re)building them here on both controllers
                                 windowsJavaReleases.each { javaRelease ->
                                     withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
-                                        powershell './make.ps1 build -ImageType ${env:IMAGE_TYPE} -OverwriteDockerComposeFile'
+                                        powershell './make.ps1 build -ImageType ${env:IMAGE_TYPE}'
                                     }
                                 }
                             }
@@ -162,7 +162,7 @@ def parallelStages = [failFast: false]
                                     } else {
                                         windowsJavaReleases.each { javaRelease ->
                                             withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
-                                                powershell './make.ps1 publish -ImageType ${env:IMAGE_TYPE} -OverwriteDockerComposeFile'
+                                                powershell './make.ps1 publish -ImageType ${env:IMAGE_TYPE}'
                                             }
                                         }
                                     }

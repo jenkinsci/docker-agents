@@ -11,8 +11,6 @@ Param(
     [String] $ImageType = 'nanoserver-ltsc2022',
     # Image build number
     [String] $BuildNumber = '1',
-    # Generate a docker compose file even if it already exists
-    [switch] $OverwriteDockerComposeFile = $false,
     # Print the build and publish command instead of executing them if set
     [switch] $DryRun = $false,
     # Pester version to install and use for tests
@@ -180,13 +178,9 @@ foreach($agentType in $AgentTypes) {
     $baseDockerCmd = 'docker-compose --file={0}' -f $dockerComposeFile
     $baseDockerBuildCmd = '{0} build --pull' -f $baseDockerCmd
 
-    # Generate the docker compose file if it doesn't exists or if the parameter OverwriteDockerComposeFile is set
-    if ((Test-Path $dockerComposeFile) -and -not $OverwriteDockerComposeFile) {
-        Write-Host "= PREPARE: The docker compose file '$dockerComposeFile' containing the $agentType image definitions already exists."
-    } else {
-        Write-Host "= PREPARE: Generate docker compose file '$dockerComposeFile' containing the $agentType image definitions."
-        Initialize-DockerComposeFile -AgentType $AgentType -ImageType $ImageType -DockerComposeFile $dockerComposeFile
-    }
+    # Generate the docker compose file (warning: will overwrite existing file)
+    Write-Host "= PREPARE: Generate docker compose file '$dockerComposeFile' containing the $agentType image definitions."
+    Initialize-DockerComposeFile -AgentType $AgentType -ImageType $ImageType -DockerComposeFile $dockerComposeFile
 
     if ($Target -eq 'build') {
         Write-Host '= PREPARE: List of images and tags to be processed:'
