@@ -62,6 +62,7 @@ def parallelStages = [failFast: false]
     'inbound-agent_debian_jdk25',
     'rhel_ubi9',
     'nanoserver-ltsc2022',
+    'nanoserver-ltsc2025',
     'windowsservercore-ltsc2022',
     'windowsservercore-ltsc2025',
 ].each { imageType ->
