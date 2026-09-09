@@ -23,10 +23,19 @@
 #  THE SOFTWARE.
 
 ARG WINDOWS_VERSION_TAG=ltsc2019
-FROM mcr.microsoft.com/windows/servercore:"${WINDOWS_VERSION_TAG}" AS jdk-pwsh
+FROM mcr.microsoft.com/windows/servercore:"${WINDOWS_VERSION_TAG}" AS source
 
 # $ProgressPreference: https://github.com/PowerShell/PowerShell/issues/2138#issuecomment-251261324
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+
+ARG W64DEVKIT_VERSION=1.23.0
+COPY windows/nanoserver/setpd.c C:/setpd.c
+RUN $url = 'https://github.com/skeeto/w64devkit/releases/download/v{0}/w64devkit-{0}.zip' -f $env:W64DEVKIT_VERSION ; `
+    Invoke-WebRequest $url -OutFile C:/w64.zip ; `
+    Expand-Archive C:/w64.zip -Destination C:/w64 ; `
+    $env:PATH = 'C:/w64/w64devkit/bin;' + $env:PATH ; `
+    & "C:/w64/w64devkit/bin/gcc.exe" C:/setpd.c -o C:/setpd.exe -municode -ladvapi32 -static ; `
+    Remove-Item -Recurse -Force C:/w64
 
 ARG JAVA_RELEASE
 ENV JAVA_HOME="C:/openjdk-${JAVA_RELEASE}"
@@ -58,13 +67,20 @@ ENV PSHOME="C:\Program Files\PowerShell"
 ENV PATH="C:\Windows\system32;C:\Windows;${PSHOME};"
 
 # The nanoserver image lacks components required for the local user account setup below
-COPY --from=jdk-pwsh /windows/system32/netapi32.dll /windows/system32/netapi32.dll
-COPY --from=jdk-pwsh /windows/system32/whoami.exe /windows/system32/whoami.exe
-COPY --from=jdk-pwsh $JAVA_HOME $JAVA_HOME
-COPY --from=jdk-pwsh /pwsh $PSHOME
+COPY --from=source /windows/system32/whoami.exe /windows/system32/whoami.exe
+COPY --from=source $JAVA_HOME $JAVA_HOME
+COPY --from=source /pwsh $PSHOME
+# nanoserver-ltsc2022 lacks netapi32.dll while nanoserver-ltsc2025 has a protected stub
+COPY --from=source /windows/system32/netapi32.dll /netapi32.dll
 
 SHELL ["pwsh.exe", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 USER ContainerAdministrator
+
+RUN if (!(Test-Path 'C:/Windows/System32/netapi32.dll')) { `
+        Move-Item 'C:/netapi32.dll' 'C:/Windows/System32/netapi32.dll' `
+    } else { `
+        Remove-Item 'C:/netapi32.dll' `
+    }
 
 ARG GIT_VERSION=2.55.0
 ARG GIT_PATCH_VERSION=5
@@ -115,6 +131,10 @@ RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tl
     Invoke-WebRequest $('https://repo.jenkins-ci.org/public/org/jenkins-ci/main/remoting/{0}/remoting-{0}.jar.sha1' -f $env:VERSION) -OutFile (Join-Path C:/ProgramData/Jenkins $env:AGENT_HASH_FILENAME) -UseBasicParsing ; `
     if ((Get-FileHash (Join-Path C:/ProgramData/Jenkins $env:AGENT_FILENAME) -Algorithm SHA1).Hash -ne (Get-Content (Join-Path C:/ProgramData/Jenkins $env:AGENT_HASH_FILENAME))) {exit 1} ; `
     Remove-Item -Force (Join-Path C:/ProgramData/Jenkins $env:AGENT_HASH_FILENAME)
+
+COPY --from=source /setpd.exe /setpd.exe
+RUN & C:/setpd.exe WORKGROUP ; `
+    Remove-Item C:/setpd.exe
 
 USER $user
 
