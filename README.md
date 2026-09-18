@@ -221,7 +221,7 @@ $ make show
       "context": ".",
       "dockerfile": "alpine/Dockerfile",
       "args": {
-        "ALPINE_TAG": "3.24.1",
+        "ALPINE_TAG": "3.24.2",
         "VERSION": "3391.va_37fa_a_305d6d"
       },
       "tags": [
