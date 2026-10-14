@@ -82,8 +82,8 @@ RUN if (!(Test-Path 'C:/Windows/System32/netapi32.dll')) { `
         Remove-Item 'C:/netapi32.dll' `
     }
 
-ARG GIT_VERSION=2.55.0
-ARG GIT_PATCH_VERSION=5
+ARG GIT_VERSION=2.56.0
+ARG GIT_PATCH_VERSION=2
 RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; `
     # The patch "windows.1" always have a different URL than the subsequent patch (ZIP filename is different)
     if($env:GIT_PATCH_VERSION -eq 1) { $url = $('https://github.com/git-for-windows/git/releases/download/v{0}.windows.{1}/MinGit-{0}-64-bit.zip' -f $env:GIT_VERSION, $env:GIT_PATCH_VERSION); } `
