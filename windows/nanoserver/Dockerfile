@@ -95,7 +95,7 @@ RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tl
 
 ENV ProgramFiles="C:\Program Files" `
     WindowsPATH="C:\Windows\system32;C:\Windows"
-ENV PATH="${WindowsPATH};${ProgramFiles}\PowerShell;${JAVA_HOME}\bin;C:\mingit\cmd"
+ENV PATH="${WindowsPATH};${ProgramFiles}\PowerShell;${JAVA_HOME}\bin;C:\mingit\cmd;C:\mingit\ucrt64\bin"
 
 ARG GIT_LFS_VERSION=3.8.1
 RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; `
@@ -103,11 +103,11 @@ RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tl
     Write-Host "Retrieving $url..." ; `
     Invoke-WebRequest $url -OutFile 'GitLfs.zip' -UseBasicParsing ; `
     Expand-Archive GitLfs.zip -DestinationPath c:\mingit\mingw64\bin ; `
-    $gitLfsFolder = 'c:\mingit\mingw64\bin\git-lfs-{0}' -f $env:GIT_LFS_VERSION ; `
-    Move-Item -Path "${gitLfsFolder}\git-lfs.exe" -Destination c:\mingit\mingw64\bin\ ; `
+    $gitLfsFolder = 'C:\mingit\mingw64\bin\git-lfs-{0}' -f $env:GIT_LFS_VERSION ; `
+    Move-Item -Path "${gitLfsFolder}\git-lfs.exe" -Destination C:\mingit\ucrt64\bin\ ; `
     Remove-Item -Path $gitLfsFolder -Recurse -Force ; `
     Remove-Item GitLfs.zip -Force ; `
-    & c:\mingit\mingw64\bin\git-lfs.exe install
+    & C:\mingit\ucrt64\bin\git-lfs.exe install
 
 ARG user=jenkins
 
