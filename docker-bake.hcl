@@ -51,7 +51,7 @@ variable "ALPINE_SHORT_TAG" {
 }
 
 variable "DEBIAN_RELEASE" {
-  default = "trixie-20261020"
+  default = "trixie-20261027"
 }
 
 variable "UBI9_TAG" {
