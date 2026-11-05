@@ -57,6 +57,13 @@ SUT_IMAGE="$(get_sut_image)"
   cleanup "${sut_cid}"
 }
 
+@test "[${SUT_IMAGE}] passes \$JENKINS_AGENT_NAME and \$JENKINS_SECRET when an argument only contains their value" {
+  run docker run --rm -e JENKINS_JAVA_BIN=echo -e JENKINS_SECRET=aaa -e JENKINS_AGENT_NAME=agent "${SUT_IMAGE}" -url http://jenkins:8080 -workDir /home/jenkins/agent-aaa
+  echo "${output}"
+  [ "${status}" -eq 0 ]
+  echo "${output}" | grep -e '-secret aaa -name agent -url'
+}
+
 @test "[${SUT_IMAGE}] use build args correctly" {
   cd "${BATS_TEST_DIRNAME}"/.. || false
 

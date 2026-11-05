@@ -116,21 +116,33 @@ else
 		AGENT_FILE="/usr/share/jenkins/agent.jar"
 	fi
 
+	# returns 0 if one of the remaining arguments is exactly the first argument (or an "-option=" followed by it)
+	is_arg_value() {
+		local value="$1"
+		shift
+		for arg in "$@"; do
+			case "$arg" in
+				"$value"|-*"=$value") return 0 ;;
+			esac
+		done
+		return 1
+	}
+
 	# if both required options are defined, do not pass the parameters
 	if [ -n "$JENKINS_SECRET" ]; then
-		case "$@" in
-			*"${JENKINS_SECRET}"*) echo "Warning: SECRET is defined twice in command-line arguments and the environment variable" ;;
-			*)
-			SECRET="-secret ${JENKINS_SECRET}" ;;
-		esac
+		if is_arg_value "$JENKINS_SECRET" "$@"; then
+			echo "Warning: SECRET is defined twice in command-line arguments and the environment variable"
+		else
+			SECRET="-secret ${JENKINS_SECRET}"
+		fi
 	fi
 	
 	if [ -n "$JENKINS_AGENT_NAME" ]; then
-		case "$@" in
-			*"${JENKINS_AGENT_NAME}"*) echo "Warning: AGENT_NAME is defined twice in command-line arguments and the environment variable" ;;
-			*)
-			AGENT_NAME="-name ${JENKINS_AGENT_NAME}" ;;
-		esac
+		if is_arg_value "$JENKINS_AGENT_NAME" "$@"; then
+			echo "Warning: AGENT_NAME is defined twice in command-line arguments and the environment variable"
+		else
+			AGENT_NAME="-name ${JENKINS_AGENT_NAME}"
+		fi
 	fi
 
 	#TODO: Handle the case when the command-line and Environment variable contain different values.
