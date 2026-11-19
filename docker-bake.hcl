@@ -15,7 +15,7 @@ variable "java_releases_in_preview" {
 }
 
 variable "REMOTING_VERSION" {
-  default = "3395.v6e5377b_0fb_3c"
+  default = "3396.ve02b_5cde31b_2"
 }
 
 variable "REGISTRY" {
