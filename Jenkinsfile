@@ -72,7 +72,7 @@ def parallelStages = [failFast: false]
             "REMOTING_VERSION=${remotingVersion}",
             "BUILD_NUMBER=${buildNumber}",
             "IMAGE_TYPE=${imageType}",
-            "REGISTRY_ORG=${infra.isTrusted() ? 'jenkins' : 'jenkins4eval'}"
+            "REGISTRY_ORG=${infra.isTrustedCiController() ? 'jenkins' : 'jenkins4eval'}"
         ]) {
             int retryCounter = 0
             retry(count: 2, conditions: [agent(), nonresumable()]) {
@@ -99,7 +99,7 @@ def parallelStages = [failFast: false]
                         }
 
                         // No single arch build or test on trusted.ci.jenkins.io
-                        if (!infra.isTrusted()) {
+                        if (!infra.isTrustedCiController()) {
                             // Build current arch for Linux images
                             stage('Build current arch') {
                                 if (isUnix()) {
@@ -146,7 +146,7 @@ def parallelStages = [failFast: false]
                         }
 
                         // trusted.ci.jenkins.io builds (e.g. publication to DockerHub)
-                        if (infra.isTrusted()) {
+                        if (infra.isTrustedCiController()) {
                             stage('Deploy to DockerHub') {
                                 if (!tagWithOneDashExist) {
                                     error("The deployment to Docker Hub failed because the tag doesn't contain any '-'.")
