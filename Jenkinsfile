@@ -29,6 +29,17 @@ def agentSelector(String imageType, retryCounter) {
     ])
 }
 
+def maybeWithDockerCredentials(Closure body) {
+    if (infra.isTrusted()) {
+        // This function is defined in the jenkins-infra/pipeline-library
+        infra.withDockerCredentials {
+            body()
+        }
+    } else {
+        body()
+    }
+}
+
 // Defaul values
 def tagWithOneDashExist = false
 def remotingVersion = '3396.ve02b_5cde31b_2'
@@ -80,79 +91,78 @@ def parallelStages = [failFast: false]
                 final String resolvedAgentLabel = agentSelector(imageType, retryCounter)
                 retryCounter++
                 node(resolvedAgentLabel) {
-                    timeout(time: 60, unit: 'MINUTES') {
-                        checkout scm
-                        stage("Prepare Docker on ${resolvedAgentLabel}") {
-                            if (isUnix()) {
-                                sh 'make docker-init'
-                            } else {
-                                powershell './make.ps1 docker-init'
-                                archiveArtifacts artifacts: 'build-windows_*.yaml', allowEmptyArchive: true
-                            }
-                        }
-
-                        if (isUnix()) {
-                            stage('Checks') {
-                                sh 'make hadolint'
-                                sh 'make shellcheck'
-                            }
-                        }
-
-                        // No single arch build or test on trusted.ci.jenkins.io
-                        if (!infra.isTrusted()) {
-                            // Build current arch for Linux images
-                            stage('Build current arch') {
+                    maybeWithDockerCredentials {
+                        timeout(time: 60, unit: 'MINUTES') {
+                            checkout scm
+                            stage("Prepare Docker on ${resolvedAgentLabel}") {
                                 if (isUnix()) {
-                                    sh 'make "build-${IMAGE_TYPE}"'
+                                    sh 'make docker-init'
                                 } else {
-                                    // No multiarch Windows images
+                                    powershell './make.ps1 docker-init'
+                                    archiveArtifacts artifacts: 'build-windows_*.yaml', allowEmptyArchive: true
+                                }
+                            }
+
+                            if (isUnix()) {
+                                stage('Checks') {
+                                    sh 'make hadolint'
+                                    sh 'make shellcheck'
+                                }
+                            }
+
+                            // No single arch build or test on trusted.ci.jenkins.io
+                            if (!infra.isTrusted()) {
+                                // Build current arch for Linux images
+                                stage('Build current arch') {
+                                    if (isUnix()) {
+                                        sh 'make "build-${IMAGE_TYPE}"'
+                                    } else {
+                                        // No multiarch Windows images
+                                        windowsJavaReleases.each { javaRelease ->
+                                            withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
+                                                powershell './make.ps1 build -ImageType ${env:IMAGE_TYPE}'
+                                            }
+                                        }
+                                    }
+                                }
+
+                                stage('Test') {
+                                    if (isUnix()) {
+                                        sh 'make "test-${IMAGE_TYPE}"'
+                                    } else {
+                                        windowsJavaReleases.each { javaRelease ->
+                                            withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
+                                                powershell './make.ps1 test -ImageType ${env:IMAGE_TYPE}'
+                                            }
+                                        }
+                                    }
+                                    junit 'target/**/junit-results*.xml'
+                                }
+                                archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
+                            }
+
+                            // If the tests are passing for Linux AMD64 or if we're on trusted.ci.jenkins.io
+                            // then we build all the CPU architectures
+                            stage('Build multiarch') {
+                                if (isUnix()) {
+                                    sh 'make "multiarchbuild-${IMAGE_TYPE}"'
+                                } else {
+                                    // No multiarch images for Windows, (re)building them here on both controllers
                                     windowsJavaReleases.each { javaRelease ->
                                         withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
                                             powershell './make.ps1 build -ImageType ${env:IMAGE_TYPE}'
                                         }
                                     }
                                 }
+                                archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
                             }
 
-                            stage('Test') {
-                                if (isUnix()) {
-                                    sh 'make "test-${IMAGE_TYPE}"'
-                                } else {
-                                    windowsJavaReleases.each { javaRelease ->
-                                        withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
-                                            powershell './make.ps1 test -ImageType ${env:IMAGE_TYPE}'
-                                        }
+                            // trusted.ci.jenkins.io builds (e.g. publication to DockerHub)
+                            if (infra.isTrusted()) {
+                                stage('Deploy to DockerHub') {
+                                    if (!tagWithOneDashExist) {
+                                        error("The deployment to Docker Hub failed because the tag doesn't contain any '-'.")
                                     }
-                                }
-                                junit 'target/**/junit-results*.xml'
-                            }
-                            archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
-                        }
-
-                        // If the tests are passing for Linux AMD64 or if we're on trusted.ci.jenkins.io
-                        // then we build all the CPU architectures
-                        stage('Build multiarch') {
-                            if (isUnix()) {
-                                sh 'make "multiarchbuild-${IMAGE_TYPE}"'
-                            } else {
-                                // No multiarch images for Windows, (re)building them here on both controllers
-                                windowsJavaReleases.each { javaRelease ->
-                                    withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
-                                        powershell './make.ps1 build -ImageType ${env:IMAGE_TYPE}'
-                                    }
-                                }
-                            }
-                            archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
-                        }
-
-                        // trusted.ci.jenkins.io builds (e.g. publication to DockerHub)
-                        if (infra.isTrusted()) {
-                            stage('Deploy to DockerHub') {
-                                if (!tagWithOneDashExist) {
-                                    error("The deployment to Docker Hub failed because the tag doesn't contain any '-'.")
-                                }
-                                // This function is defined in the jenkins-infra/pipeline-library
-                                infra.withDockerCredentials {
                                     if (isUnix()) {
                                         if (imageType != 'linux') {
                                             sh 'make "publish-${IMAGE_TYPE}"'
@@ -167,8 +177,8 @@ def parallelStages = [failFast: false]
                                             }
                                         }
                                     }
+                                    archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
                                 }
-                                archiveArtifacts artifacts: 'target/build-result-metadata_*.json', allowEmptyArchive: true
                             }
                         }
                     }
