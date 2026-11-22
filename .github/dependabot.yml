@@ -6,6 +6,7 @@ updates:
 - package-ecosystem: "github-actions"
   labels:
     - "skip-changelog"
+    - "variant-github-action"
   target-branch: master
   directory: "/"
   schedule:

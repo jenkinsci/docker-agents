@@ -43,29 +43,58 @@ if (env.TAG_NAME) {
     }
 }
 
-// Specify java release(s) to build for Windows images
-def windowsJavaReleases = [21, 25]
-
-// Specify parallel stages
 // Linux: bake group(s) or target(s), see 'make list' or 'make listgroup-linux' output
 // Note: splitting Alpine and Debian targets to avoid 429 rate limit errors from Docker Hub
 // Windows: flavor and version to build
+def allImagesTypeAndTheirVariants = [
+    'agent_alpine_jdk21':         ['linux', 'alpine', 'jdk21'],
+    'agent_alpine_jdk25':         ['linux', 'alpine', 'jdk25'],
+    'inbound-agent_alpine_jdk21': ['linux', 'alpine', 'jdk21'],
+    'inbound-agent_alpine_jdk25': ['linux', 'alpine', 'jdk25'],
+    'agent_debian_jdk21':         ['linux', 'debian', 'jdk21'],
+    'agent_debian_jdk25':         ['linux', 'debian', 'jdk25'],
+    'inbound-agent_debian_jdk21': ['linux', 'debian', 'jdk21'],
+    'inbound-agent_debian_jdk25': ['linux', 'debian', 'jdk25'],
+    'rhel_ubi9':                  ['linux', 'rhel', 'jdk21', 'jdk25'],
+    'nanoserver-ltsc2022':        ['windows', 'nanoserver', 'jdk21', 'jdk25'],
+    'nanoserver-ltsc2025':        ['windows', 'nanoserver', 'jdk21', 'jdk25'],
+    'windowsservercore-ltsc2022': ['windows', 'jdk21', 'jdk25'],
+    'windowsservercore-ltsc2025': ['windows', 'jdk21', 'jdk25'],
+]
+
+// Specify java release(s) to build for Windows images
+def allWindowsJavaReleases = [21, 25]
+
+def imageTypesToBuild = allImagesTypeAndTheirVariants.keySet().toList()
+def windowsJavaReleases = allWindowsJavaReleases.collect()
+if (env.CHANGE_ID) {
+    def requestedVariants = []
+    pullRequest.labels.each { label -> 
+        if (label.startsWith('variant-')) {
+            requestedVariants << label.replace('variant-', '')
+        }
+    }
+    if (requestedVariants) {
+        echo "Building only selected variant(s): ${requestedVariants}"
+
+        imageTypesToBuild = allImagesTypeAndTheirVariants.findAll { image, variants ->
+            variants.any { it in requestedVariants }
+        }.keySet().toList()
+
+        // Special case for JDK variants and Windows Java releases
+        if (requestedVariants.any { it ==~ /jdk\d+/ }) {
+            windowsJavaReleases = []
+            requestedVariants.findAll { it.contains('jdk') }.each {
+                windowsJavaReleases += it.replace('jdk', '')
+            }
+            echo "Building only Windows Java release(s): ${windowsJavaReleases}"
+        }
+        echo "Images to build: ${imageTypesToBuild}"
+    }
+}
+
 def parallelStages = [failFast: false]
-[
-    'agent_alpine_jdk21',
-    'agent_alpine_jdk25',
-    'inbound-agent_alpine_jdk21',
-    'inbound-agent_alpine_jdk25',
-    'agent_debian_jdk21',
-    'agent_debian_jdk25',
-    'inbound-agent_debian_jdk21',
-    'inbound-agent_debian_jdk25',
-    'rhel_ubi9',
-    'nanoserver-ltsc2022',
-    'nanoserver-ltsc2025',
-    'windowsservercore-ltsc2022',
-    'windowsservercore-ltsc2025',
-].each { imageType ->
+imageTypesToBuild.each { imageType ->
     parallelStages[imageType] = {
         withEnv([
             "ON_TAG=${tagWithOneDashExist}",

@@ -48,3 +48,4 @@ actions:
         - dependencies
         - pester
         - windows
+        - variant-windows

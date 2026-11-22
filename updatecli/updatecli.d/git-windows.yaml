@@ -93,3 +93,4 @@ actions:
         - enhancement
         - git
         - windows
+        - variant-windows
