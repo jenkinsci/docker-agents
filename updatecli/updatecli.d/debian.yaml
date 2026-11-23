@@ -69,3 +69,4 @@ actions:
       labels:
         - dependencies
         - debian
+        - variant-debian

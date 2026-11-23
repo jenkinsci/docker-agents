@@ -111,3 +111,4 @@ actions:
     spec:
       labels:
         - dependencies
+        - variant-alpine

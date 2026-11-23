@@ -55,3 +55,4 @@ actions:
         - enhancement
         - pwsh
         - nanoserver
+        - variant-nanoserver

@@ -47,3 +47,4 @@ actions:
         - dependencies
         - tests
         - bats
+        - variant-linux

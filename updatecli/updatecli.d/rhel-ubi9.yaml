@@ -63,3 +63,4 @@ actions:
       labels:
         - dependencies
         - rhel-ubi9
+        - variant-rhel
