@@ -149,7 +149,7 @@ imageTypesToBuild.each { imageType ->
                                 } else {
                                     windowsJavaReleases.each { javaRelease ->
                                         withEnv(["JAVA_RELEASE_OVERRIDE=${javaRelease}"]) {
-                                            powershell './make.ps1 test -ImageType ${env:IMAGE_TYPE}'
+                                            powershell './make.ps1 test -ImageType ${env:IMAGE_TYPE} -TestsDebug verbose'
                                         }
                                     }
                                 }
