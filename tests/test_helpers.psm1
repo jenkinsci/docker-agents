@@ -91,6 +91,14 @@ function Is-ContainerRunning($container='') {
     Retry-Command -RetryCount 10 -Delay 3 -ScriptBlock { 
         $exitCode, $stdout, $stderr = Run-Program 'docker.exe' "inspect -f `"{{.State.Running}}`" $container"
         if (($exitCode -ne 0) -or (-not $stdout.Contains('true')) ) {
+            if ($env:TESTS_DEBUG -in @('debug', 'verbose')) {
+                Write-Host -ForegroundColor DarkRed "[stderr] $stderr"
+                if ($env:TESTS_DEBUG -eq 'verbose') {
+                    Write-Host -ForegroundColor DarkGray "[stdout] $stdout"
+                }
+                docker inspect $container
+                docker logs $container
+            }
             throw('Exit code incorrect, or invalid value for running state')
         }
         return $true
