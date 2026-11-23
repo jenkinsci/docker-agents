@@ -96,8 +96,8 @@ function Is-ContainerRunning($container='') {
                 if ($env:TESTS_DEBUG -eq 'verbose') {
                     Write-Host -ForegroundColor DarkGray "[stdout] $stdout"
                 }
-                docker inspect $container
-                docker logs $container
+                docker inspect --format json $container | jq | Out-Host
+                docker logs $container | Out-Host
             }
             throw('Exit code incorrect, or invalid value for running state')
         }
@@ -122,11 +122,13 @@ function Run-Program($cmd, $params) {
     $proc.WaitForExit()
     if (($env:TESTS_DEBUG -eq 'debug') -or ($env:TESTS_DEBUG -eq 'verbose')) {
         Write-Host -ForegroundColor DarkBlue "[cmd] $cmd $params"
-        if ($env:TESTS_DEBUG -eq 'verbose') {
-            Write-Host -ForegroundColor DarkGray "[stdout] $stdout"
-        }
         if ($proc.ExitCode -ne 0){
             Write-Host -ForegroundColor DarkRed "[stderr] $stderr"
+            Write-Host -ForegroundColor DarkGray "[stdout] $stdout"
+        } else {
+            if ($env:TESTS_DEBUG -eq 'verbose') {
+                Write-Host -ForegroundColor DarkGray "[stdout] $stdout"
+            }
         }
     }
 

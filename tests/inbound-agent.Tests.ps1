@@ -43,8 +43,8 @@ Describe "[$global:IMAGE_NAME] build image" {
 Describe "[$global:IMAGE_NAME] debug" {
     It 'debug' {
         $exitCode, $stdout, $stderr = Run-Program 'docker' "run --detach --tty --entrypoint $global:CONTAINERSHELL --name $global:CONTAINERNAME $global:IMAGE_NAME -NoLogo -NoProfile -Command `"$global:CONTAINERSHELL -NoLogo -NoProfile -Command 'Start-Sleep 300'"`"
-        docker inspect --format '{{json .State}}' $global:CONTAINERNAME
-        docker logs $global:CONTAINERNAME
+        docker inspect --format json $global:CONTAINERNAME | jq | Out-Host
+        docker logs $global:CONTAINERNAME | Out-Host
         Is-ContainerRunning $global:CONTAINERNAME | Should -BeTrue
     }
 
