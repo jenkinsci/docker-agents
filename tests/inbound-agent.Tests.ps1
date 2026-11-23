@@ -40,6 +40,19 @@ Describe "[$global:IMAGE_NAME] build image" {
     }
 }
 
+Describe "[$global:IMAGE_NAME] debug" {
+    It 'debug' {
+        $exitCode, $stdout, $stderr = Run-Program 'docker' "run --detach --tty --entrypoint $global:CONTAINERSHELL --name $global:CONTAINERNAME $global:IMAGE_NAME -NoLogo -NoProfile -Command `"$global:CONTAINERSHELL -NoLogo -NoProfile -Command 'Start-Sleep 300'"`"
+        docker inspect --format '{{json .State}}' $global:CONTAINERNAME
+        docker logs $global:CONTAINERNAME
+        Is-ContainerRunning $global:CONTAINERNAME | Should -BeTrue
+    }
+
+    AfterAll {
+        Cleanup($global:CONTAINERNAME)
+    }
+}
+
 Describe "[$global:IMAGE_NAME] check default user account" {
     BeforeAll {
         docker run --detach --tty --name "$global:CONTAINERNAME" "$global:IMAGE_NAME" -Cmd "$global:CONTAINERSHELL"
