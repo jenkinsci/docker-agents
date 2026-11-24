@@ -41,10 +41,80 @@ Describe "[$global:IMAGE_NAME] build image" {
 }
 
 Describe "[$global:IMAGE_NAME] debug" {
-    It 'debug' {
-        $exitCode, $stdout, $stderr = Run-Program 'docker' "run --detach --tty --entrypoint $global:CONTAINERSHELL --name $global:CONTAINERNAME $global:IMAGE_NAME -NoLogo -NoProfile -Command `"$global:CONTAINERSHELL -NoLogo -NoProfile -Command 'Start-Sleep 300'"`"
-        docker inspect --format json $global:CONTAINERNAME | jq | Out-Host
+    It 'diagnoses nested PowerShell initialization' {
+        $debugScript = @'
+Write-Output "=== Parent PowerShell ==="
+Write-Output "PSVersion: $($PSVersionTable.PSVersion)"
+Write-Output "PSHOME: [$PSHOME]"
+Write-Output "PSModulePath: [$env:PSModulePath]"
+Write-Output "USERPROFILE: [$env:USERPROFILE]"
+Write-Output "HOME: [$env:HOME]"
+
+Write-Output "`n=== PowerShell-related environment variables ==="
+Get-ChildItem Env: |
+    Where-Object Name -Match '^(PS|HOME|USERPROFILE)' |
+    Sort-Object Name |
+    Format-Table -AutoSize |
+    Out-String |
+    Write-Output
+
+Write-Output "`n=== Registry environment values ==="
+$registryPaths = @(
+    'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment'
+    'HKCU:\Environment'
+)
+
+foreach ($path in $registryPaths) {
+    Write-Output "--- $path ---"
+    if (Test-Path $path) {
+        Get-ItemProperty -Path $path |
+            Format-List * |
+            Out-String |
+            Write-Output
+    }
+    else {
+        Write-Output "Registry path does not exist"
+    }
+}
+
+Write-Output "`n=== PSHOME Modules directory ==="
+Write-Output "Exists: $(Test-Path "$PSHOME\Modules")"
+Get-ChildItem "$PSHOME\Modules" -ErrorAction SilentlyContinue |
+    Select-Object -ExpandProperty Name |
+    Write-Output
+
+Write-Output "`n=== Child PowerShell: inherited PSModulePath ==="
+& pwsh.exe -NoLogo -NoProfile -Command "Write-Output 'CHILD_DEFAULT_STARTED'; exit 0"
+Write-Output "Child default exit code: $LASTEXITCODE"
+
+Write-Output "`n=== Child PowerShell: explicit PSModulePath ==="
+$env:PSModulePath = "$PSHOME\Modules"
+Write-Output "Overridden PSModulePath: [$env:PSModulePath]"
+
+& pwsh.exe -NoLogo -NoProfile -Command "Write-Output 'CHILD_OVERRIDE_STARTED'; exit 0"
+Write-Output "Child override exit code: $LASTEXITCODE"
+
+Write-Output "`n=== Parent staying alive ==="
+Start-Sleep -Seconds 300
+'@
+
+        # Use -EncodedCommand to avoid multiple layers of Windows/Docker/PowerShell quoting.
+        $encodedScript = [Convert]::ToBase64String(
+            [System.Text.Encoding]::Unicode.GetBytes($debugScript)
+        )
+
+        $exitCode, $stdout, $stderr = Run-Program 'docker' "run --detach --tty --entrypoint $global:CONTAINERSHELL --name $global:CONTAINERNAME $global:IMAGE_NAME -NoLogo -NoProfile -EncodedCommand $encodedScript"
+
+        $exitCode | Should -Be 0
+
+        Start-Sleep -Seconds 3
+
+        Write-Host "`n=== Container state ==="
+        docker inspect --format '{{.State.Status}} (exit code: {{.State.ExitCode}})' $global:CONTAINERNAME | Out-Host
+
+        Write-Host "`n=== Container logs ==="
         docker logs $global:CONTAINERNAME | Out-Host
+
         Is-ContainerRunning $global:CONTAINERNAME | Should -BeTrue
     }
 
