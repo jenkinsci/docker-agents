@@ -94,6 +94,47 @@ Write-Output "Overridden PSModulePath: [$env:PSModulePath]"
 & pwsh.exe -NoLogo -NoProfile -Command "Write-Output 'CHILD_OVERRIDE_STARTED'; exit 0"
 Write-Output "Child override exit code: $LASTEXITCODE"
 
+Write-Output "`n=== Registry PSModulePath experiment ==="
+Write-Output "Running as: $(whoami)"
+
+$machineEnvironment = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment'
+$userEnvironment = 'HKCU:\Environment'
+$modulePath = "$PSHOME\Modules"
+
+Write-Output "`n--- Add machine PSModulePath ---"
+New-ItemProperty `
+    -Path $machineEnvironment `
+    -Name PSModulePath `
+    -Value $modulePath `
+    -PropertyType ExpandString `
+    -Force | Out-Null
+
+Get-ItemProperty -Path $machineEnvironment -Name PSModulePath |
+    Format-List PSModulePath |
+    Out-String |
+    Write-Output
+
+Write-Output "`n--- Child with machine registry value ---"
+& pwsh.exe -NoLogo -NoProfile -Command "Write-Output 'CHILD_MACHINE_STARTED'; exit 0"
+Write-Output "Child exit code: $LASTEXITCODE"
+
+Write-Output "`n--- Add user PSModulePath ---"
+New-ItemProperty `
+    -Path $userEnvironment `
+    -Name PSModulePath `
+    -Value $modulePath `
+    -PropertyType ExpandString `
+    -Force | Out-Null
+
+Get-ItemProperty -Path $userEnvironment -Name PSModulePath |
+    Format-List PSModulePath |
+    Out-String |
+    Write-Output
+
+Write-Output "`n--- Child with machine and user registry values ---"
+& pwsh.exe -NoLogo -NoProfile -Command "Write-Output 'CHILD_BOTH_STARTED'; exit 0"
+Write-Output "Child exit code: $LASTEXITCODE"
+
 Write-Output "`n=== Parent staying alive ==="
 Start-Sleep -Seconds 300
 '@
