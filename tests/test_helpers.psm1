@@ -91,6 +91,14 @@ function Is-ContainerRunning($container='') {
     Retry-Command -RetryCount 10 -Delay 3 -ScriptBlock { 
         $exitCode, $stdout, $stderr = Run-Program 'docker.exe' "inspect -f `"{{.State.Running}}`" $container"
         if (($exitCode -ne 0) -or (-not $stdout.Contains('true')) ) {
+            if ($env:TESTS_DEBUG -in @('debug', 'verbose')) {
+                Write-Host -ForegroundColor DarkRed "[stderr] $stderr"
+                if ($env:TESTS_DEBUG -eq 'verbose') {
+                    Write-Host -ForegroundColor DarkGray "[stdout] $stdout"
+                }
+                docker inspect --format json $container | jq | Out-Host
+                docker logs $container | Out-Host
+            }
             throw('Exit code incorrect, or invalid value for running state')
         }
         return $true
@@ -114,11 +122,13 @@ function Run-Program($cmd, $params) {
     $proc.WaitForExit()
     if (($env:TESTS_DEBUG -eq 'debug') -or ($env:TESTS_DEBUG -eq 'verbose')) {
         Write-Host -ForegroundColor DarkBlue "[cmd] $cmd $params"
-        if ($env:TESTS_DEBUG -eq 'verbose') {
-            Write-Host -ForegroundColor DarkGray "[stdout] $stdout"
-        }
         if ($proc.ExitCode -ne 0){
             Write-Host -ForegroundColor DarkRed "[stderr] $stderr"
+            Write-Host -ForegroundColor DarkGray "[stdout] $stdout"
+        } else {
+            if ($env:TESTS_DEBUG -eq 'verbose') {
+                Write-Host -ForegroundColor DarkGray "[stdout] $stdout"
+            }
         }
     }
 
