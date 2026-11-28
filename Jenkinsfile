@@ -181,7 +181,7 @@ imageTypesToBuild.each { imageType ->
                                     error("The deployment to Docker Hub failed because the tag doesn't contain any '-'.")
                                 }
                                 // This function is defined in the jenkins-infra/pipeline-library
-                                infra.withDockerCredentials {
+                                infra.withContainerRegistry {
                                     if (isUnix()) {
                                         if (imageType != 'linux') {
                                             sh 'make "publish-${IMAGE_TYPE}"'
